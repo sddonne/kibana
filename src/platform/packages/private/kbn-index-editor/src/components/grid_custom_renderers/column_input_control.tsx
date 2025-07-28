@@ -10,7 +10,7 @@
 import type { EuiDataGridColumn } from '@elastic/eui';
 import { CustomGridColumnProps } from '@kbn/unified-data-table';
 import { EuiFieldText, EuiButtonEmpty, EuiForm, EuiToolTip, useEuiTheme } from '@elastic/eui';
-import React, { useState, KeyboardEvent } from 'react';
+import React, { useState, KeyboardEvent, FocusEvent } from 'react';
 import { FormattedMessage } from '@kbn/i18n-react';
 import { IndexUpdateService } from '../../index_update_service';
 import { useAddColumnName } from '../../hooks/use_add_column_name';
@@ -26,7 +26,10 @@ export const getColumnInputRenderer = (
 
   return ({ column }) => ({
     ...column,
-    display: <AddColumnHeader initialColumnName={initialColumnName} />,
+    display: <AddColumnHeader initialColumnName={initialColumnName} containerId={column.id} />,
+    displayHeaderCellProps: {
+      'data-column-name': column.id,
+    },
     actions: {
       showHide: false,
       additional: initialColumnName
@@ -52,22 +55,34 @@ export const getColumnInputRenderer = (
 
 interface AddColumnHeaderProps {
   initialColumnName?: string;
+  containerId: string;
 }
 
-export const AddColumnHeader = ({ initialColumnName }: AddColumnHeaderProps) => {
+export const AddColumnHeader = ({ initialColumnName, containerId }: AddColumnHeaderProps) => {
   const { euiTheme } = useEuiTheme();
   const { columnName, setColumnName, saveColumn, validationError } =
     useAddColumnName(initialColumnName);
 
   const [isEditing, setIsEditing] = useState(false);
 
+  const focusContainer = (focusContainerId: string) =>
+    requestAnimationFrame(() => {
+      const containerElement = document.querySelector(
+        `[data-column-name="${`${focusContainerId}`}"]`
+      ) as HTMLElement | null;
+      containerElement?.focus();
+    });
+
   const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    event.stopPropagation();
 
     if (!validationError) {
       await saveColumn();
       setColumnName('');
       setIsEditing(false);
+
+      focusContainer(columnName);
     }
   };
 
@@ -98,9 +113,16 @@ export const AddColumnHeader = ({ initialColumnName }: AddColumnHeaderProps) => 
               setIsEditing(false);
             }}
             onKeyDown={(e: KeyboardEvent) => {
-              e.stopPropagation();
+              // e.stopPropagation();
+              if (['ArrowLeft', 'ArrowUp', 'ArrowDown', 'ArrowRight'].includes(e.key)) {
+                e.stopPropagation();
+              }
               if (e.key === 'Escape') {
+                e.preventDefault();
+                e.stopPropagation();
+                setColumnName('');
                 setIsEditing(false);
+                focusContainer(containerId);
               }
             }}
             css={{
@@ -116,6 +138,7 @@ export const AddColumnHeader = ({ initialColumnName }: AddColumnHeaderProps) => 
 
   return (
     <EuiButtonEmpty
+      // autoFocus
       css={{
         color: euiTheme.colors.textSubdued,
         width: '100%',
@@ -129,7 +152,16 @@ export const AddColumnHeader = ({ initialColumnName }: AddColumnHeaderProps) => 
       }}
       onClick={() => setIsEditing(true)}
       onKeyDown={(e: KeyboardEvent) => {
-        if (e.key === 'Enter') setIsEditing(true);
+        e.preventDefault();
+        e.stopPropagation();
+        if (e.key === 'Enter') {
+          setIsEditing(true);
+        } else {
+          focusContainer(containerId);
+        }
+      }}
+      onFocus={(e: FocusEvent) => {
+        // setIsEditing(true);
       }}
     >
       {columnLabel}
