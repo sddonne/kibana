@@ -21,11 +21,10 @@ import {
   type EuiDataGridRefProps,
 } from '@kbn/unified-data-table';
 import type { RestorableStateProviderApi } from '@kbn/restorable-state';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import useObservable from 'react-use/lib/useObservable';
-import { difference, intersection, times } from 'lodash';
+import { difference, intersection } from 'lodash';
 import { getColumnInputRenderer } from './grid_custom_renderers/column_input_control';
-import { COLUMN_PLACEHOLDER_PREFIX } from '../constants';
 import { KibanaContextExtra } from '../types';
 import {
   getCellValueRenderer,
@@ -46,7 +45,6 @@ interface ESQLDataGridProps {
 const DEFAULT_INITIAL_ROW_HEIGHT = 2;
 const DEFAULT_ROWS_PER_PAGE = 10;
 const ROWS_PER_PAGE_OPTIONS = [10, 25];
-const MAX_COLUMN_PLACEHOLDERS = 4;
 
 const DataGrid: React.FC<ESQLDataGridProps> = (props) => {
   const [sortOrder, setSortOrder] = useState<SortOrder[]>([]);
@@ -98,10 +96,25 @@ const DataGrid: React.FC<ESQLDataGridProps> = (props) => {
     [props.columns]
   );
 
+  useEffect(() => {
+    const currentColumnNames = props.columns
+      .map((c) => c.name)
+      .filter((name) => !hiddenColumns.current.includes(name));
+
+    const newColumn = difference(currentColumnNames, activeColumns).at(0);
+
+    if (newColumn) {
+      const preservedOrder = intersection(activeColumns, currentColumnNames);
+      const newColumnIndex = currentColumnNames.findIndex((col) => col === newColumn);
+      // if there is a new column, we added at it original index
+      preservedOrder.splice(newColumnIndex, 0, newColumn);
+      setActiveColumns(preservedOrder);
+    }
+  }, [props.columns, activeColumns]);
+
   // Visible columns are calculated based on 3 sources:
   // - The columns provided by the props, they provide the initial columns set, and any new column added by the user.
   // - The activeColumns state, which is the list of columns that are currently visible in the grid. But most importantly, it preserves the order of the columns.
-  // - The hiddenColumns ref, which tracks the columns that are currently hidden.
   // The visible columns are determined by:
   // - Filter out hidden columns from the props.columns
   // - Ensure the order is preserved based on activeColumns
@@ -111,17 +124,11 @@ const DataGrid: React.FC<ESQLDataGridProps> = (props) => {
       .map((c) => c.name)
       .filter((name) => !hiddenColumns.current.includes(name));
 
+    const newColumns = difference(currentColumnNames, activeColumns);
     const preservedOrder = intersection(activeColumns, currentColumnNames);
-    const newColumns = difference(currentColumnNames, preservedOrder);
 
-    const missingPlaceholders = MAX_COLUMN_PLACEHOLDERS - props.columns.length;
-    const addColumnPlaceholders =
-      missingPlaceholders > 0
-        ? times(missingPlaceholders, (idx) => `${COLUMN_PLACEHOLDER_PREFIX}${idx}`)
-        : [];
-
-    return [...newColumns, ...preservedOrder, ...addColumnPlaceholders];
-  }, [props.columns, hiddenColumns, activeColumns]);
+    return [...newColumns, ...preservedOrder];
+  }, [props.columns, activeColumns]);
 
   const columnsMeta = useMemo(() => {
     return props.columns.reduce((acc, column) => {
@@ -180,7 +187,7 @@ const DataGrid: React.FC<ESQLDataGridProps> = (props) => {
   const customGridColumnsConfiguration = useMemo(() => {
     return renderedColumns.reduce((acc, columnName) => {
       if (!props.dataView.fields.getByName(columnName)) {
-        acc[columnName] = getColumnInputRenderer(columnName, indexUpdateService);
+        acc[columnName] = getColumnInputRenderer(columnName, indexUpdateService, dataTableRef);
       }
       return acc;
     }, {} as CustomGridColumnsConfiguration);

@@ -8,9 +8,9 @@
  */
 
 import type { EuiDataGridColumn } from '@elastic/eui';
-import { CustomGridColumnProps } from '@kbn/unified-data-table';
+import { CustomGridColumnProps, type EuiDataGridRefProps } from '@kbn/unified-data-table';
 import { EuiFieldText, EuiButtonEmpty, EuiForm, EuiToolTip, useEuiTheme } from '@elastic/eui';
-import React, { useState, KeyboardEvent, FocusEvent } from 'react';
+import React, { useState, KeyboardEvent, FocusEvent, RefObject } from 'react';
 import { FormattedMessage } from '@kbn/i18n-react';
 import { IndexUpdateService } from '../../index_update_service';
 import { useAddColumnName } from '../../hooks/use_add_column_name';
@@ -18,21 +18,26 @@ import { COLUMN_PLACEHOLDER_PREFIX } from '../../constants';
 
 export const getColumnInputRenderer = (
   columnName: string,
-  indexUpdateService: IndexUpdateService
+  indexUpdateService: IndexUpdateService,
+  dataTableRef: RefObject<EuiDataGridRefProps>
 ): ((props: CustomGridColumnProps) => EuiDataGridColumn) => {
-  const initialColumnName = !columnName.startsWith(COLUMN_PLACEHOLDER_PREFIX)
-    ? columnName
-    : undefined;
+  const isPlaceholderColumn = columnName.startsWith(COLUMN_PLACEHOLDER_PREFIX);
 
   return ({ column }) => ({
     ...column,
-    display: <AddColumnHeader initialColumnName={initialColumnName} containerId={column.id} />,
+    display: (
+      <AddColumnHeader
+        initialColumnName={columnName}
+        containerId={column.id}
+        dataTableRef={dataTableRef}
+      />
+    ),
     displayHeaderCellProps: {
-      'data-column-name': column.id,
+      'data-column-id': column.id,
     },
     actions: {
       showHide: false,
-      additional: initialColumnName
+      additional: isPlaceholderColumn
         ? [
             {
               label: (
@@ -56,9 +61,14 @@ export const getColumnInputRenderer = (
 interface AddColumnHeaderProps {
   initialColumnName?: string;
   containerId: string;
+  dataTableRef: RefObject<EuiDataGridRefProps>;
 }
 
-export const AddColumnHeader = ({ initialColumnName, containerId }: AddColumnHeaderProps) => {
+export const AddColumnHeader = ({
+  initialColumnName,
+  containerId,
+  dataTableRef,
+}: AddColumnHeaderProps) => {
   const { euiTheme } = useEuiTheme();
   const { columnName, setColumnName, saveColumn, validationError } =
     useAddColumnName(initialColumnName);
@@ -67,9 +77,10 @@ export const AddColumnHeader = ({ initialColumnName, containerId }: AddColumnHea
 
   const focusContainer = (focusContainerId: string) =>
     requestAnimationFrame(() => {
-      const containerElement = document.querySelector(
-        `[data-column-name="${`${focusContainerId}`}"]`
-      ) as HTMLElement | null;
+      // HD needed?
+      const containerElement = document.querySelector<HTMLElement>(
+        `[data-column-id="${focusContainerId}"]`
+      );
       containerElement?.focus();
     });
 
@@ -86,8 +97,12 @@ export const AddColumnHeader = ({ initialColumnName, containerId }: AddColumnHea
     }
   };
 
-  const columnLabel = initialColumnName || (
+  const isPlaceholderColumn = initialColumnName?.startsWith(COLUMN_PLACEHOLDER_PREFIX); // HD extract to helper
+
+  const columnLabel = isPlaceholderColumn ? (
     <FormattedMessage id="indexEditor.flyout.grid.columnHeader.add" defaultMessage="Add a field…" />
+  ) : (
+    columnName
   );
 
   if (isEditing) {

@@ -18,7 +18,7 @@ import type { DataView } from '@kbn/data-views-plugin/public';
 import { DataTableRecord, buildDataTableRecord } from '@kbn/discover-utils';
 import type { Filter } from '@kbn/es-query';
 import { DatatableColumn } from '@kbn/expressions-plugin/common';
-import { groupBy } from 'lodash';
+import { groupBy, times } from 'lodash';
 import {
   BehaviorSubject,
   Observable,
@@ -44,12 +44,14 @@ import {
 } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 import { parsePrimitive } from './utils';
-import { ROW_PLACEHOLDER_PREFIX } from './constants';
+import { ROW_PLACEHOLDER_PREFIX, COLUMN_PLACEHOLDER_PREFIX } from './constants';
 const BUFFER_TIMEOUT_MS = 5000; // 5 seconds
 
 const UNDO_EMIT_MS = 500; // 0.5 seconds
 
 const DOCS_PER_FETCH = 1000;
+
+const MAX_COLUMN_PLACEHOLDERS = 4;
 
 interface DocUpdate {
   id?: string;
@@ -411,38 +413,58 @@ export class IndexUpdateService {
 
     // Subscribe to pendingColumnsToBeSaved$ and update _pendingColumnsToBeSaved$
     this._subscription.add(
-      this._actions$
+      this.dataView$
         .pipe(
-          withLatestFrom(this.dataView$),
-          scan((acc: ColumnAddition[], [action, dataView]) => {
-            if (action.type === 'add-column') {
-              return [...acc, action.payload];
-            }
-            if (action.type === 'edit-column') {
-              return acc.map((column) =>
-                column.name === action.payload.previousName
-                  ? { ...column, name: action.payload.name }
-                  : column
-              );
-            }
-            if (action.type === 'delete-column') {
-              return acc.filter((column) => column.name !== action.payload.name);
-            }
-            if (action.type === 'saved') {
-              // Filter out columns that were saved with a value.
-              return acc.filter((column) =>
-                action.payload.updates.every((update) => update.value[column.name] === undefined)
-              );
-            }
-            if (action.type === 'new-row-added') {
-              // Filter out columns that were populated when adding a new row
-              return acc.filter((column) => action.payload[column.name] === undefined);
-            }
-            if (action.type === 'discard-unsaved-columns') {
-              return [];
-            }
-            return acc;
-          }, [])
+          take(1),
+          switchMap((dataView) => {
+            const columnsCount = dataView.fields.filter(
+              // @ts-ignore
+              (field) => field.spec.metadata_field !== true && !field.spec.subType
+            ).length;
+
+            const missingPlaceholders = MAX_COLUMN_PLACEHOLDERS - columnsCount;
+            const initialPlaceholders =
+              missingPlaceholders > 0
+                ? times(missingPlaceholders, (idx) => ({
+                    name: `${COLUMN_PLACEHOLDER_PREFIX}${idx}`,
+                  }))
+                : [];
+
+            return this._actions$.pipe(
+              scan((acc: ColumnAddition[], action) => {
+                if (action.type === 'add-column') {
+                  return [...acc, action.payload];
+                }
+                if (action.type === 'edit-column') {
+                  return acc.map((column) =>
+                    column.name === action.payload.previousName
+                      ? { ...column, name: action.payload.name }
+                      : column
+                  );
+                }
+                if (action.type === 'delete-column') {
+                  return acc.filter((column) => column.name !== action.payload.name);
+                }
+                if (action.type === 'saved') {
+                  // Filter out columns that were saved with a value.
+                  return acc.filter((column) =>
+                    action.payload.updates.every(
+                      (update) => update.value[column.name] === undefined
+                    )
+                  );
+                }
+                if (action.type === 'new-row-added') {
+                  // Filter out columns that were populated when adding a new row
+                  return acc.filter((column) => action.payload[column.name] === undefined);
+                }
+                if (action.type === 'discard-unsaved-columns') {
+                  return [];
+                }
+                return acc;
+              }, initialPlaceholders),
+              startWith(initialPlaceholders)
+            );
+          })
         )
         .subscribe(this._pendingColumnsToBeSaved$)
     );
