@@ -58,7 +58,7 @@ interface AddColumnHeaderProps {
 
 export const AddColumnHeader = ({ initialColumnName, containerId }: AddColumnHeaderProps) => {
   const { euiTheme } = useEuiTheme();
-  const { columnName, setColumnName, saveColumn, validationError } =
+  const { columnName, setColumnName, saveColumn, resetColumnName, validationError } =
     useAddColumnName(initialColumnName);
 
   const [isEditing, setIsEditing] = useState(false);
@@ -75,9 +75,8 @@ export const AddColumnHeader = ({ initialColumnName, containerId }: AddColumnHea
     event.preventDefault();
     event.stopPropagation();
 
-    if (!validationError) {
+    if (columnName && !validationError) {
       await saveColumn();
-      setColumnName('');
       setIsEditing(false);
 
       focusContainer(columnName);
@@ -111,11 +110,13 @@ export const AddColumnHeader = ({ initialColumnName, containerId }: AddColumnHea
             }}
             onBlur={() => {
               setIsEditing(false);
+              resetColumnName();
             }}
             onKeyDown={(e: KeyboardEvent) => {
               e.stopPropagation();
               if (e.key === 'Escape') {
                 e.preventDefault();
+                resetColumnName();
                 setIsEditing(false);
                 focusContainer(containerId);
               }

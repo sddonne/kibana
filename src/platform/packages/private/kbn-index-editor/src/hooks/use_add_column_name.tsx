@@ -51,10 +51,15 @@ export const useAddColumnName = (initialColumnName = '') => {
     }
   }, [columnName, indexUpdateService, initialColumnName, validationError]);
 
+  const resetColumnName = () => {
+    setColumnName(initialInputValue);
+  };
+
   return {
     columnName,
     validationError,
     setColumnName,
     saveColumn,
+    resetColumnName,
   };
 };
