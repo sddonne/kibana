@@ -473,7 +473,7 @@ export class IndexUpdateService {
                   return acc.filter((column) => action.payload[column.name] === undefined);
                 }
                 if (action.type === 'discard-unsaved-columns') {
-                  return [];
+                  return acc.filter((column) => isPlaceholderColumn(column.name));
                 }
                 return acc;
               }, initialPlaceholders),
@@ -601,9 +601,12 @@ export class IndexUpdateService {
     this._exitAttemptWithUnsavedFields$.next(value);
   }
 
+  public discardUnsavedColumns() {
+    this._actions$.next({ type: 'discard-unsaved-columns' });
+  }
+
   public discardUnsavedChanges() {
     this._actions$.next({ type: 'discard-unsaved-values' });
-    this._actions$.next({ type: 'discard-unsaved-columns' });
   }
 
   public destroy() {
