@@ -43,7 +43,7 @@ import {
   firstValueFrom,
 } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
-import { parsePrimitive } from './utils';
+import { parsePrimitive, isPlaceholderColumn } from './utils';
 import { ROW_PLACEHOLDER_PREFIX, COLUMN_PLACEHOLDER_PREFIX } from './constants';
 const BUFFER_TIMEOUT_MS = 5000; // 5 seconds
 
@@ -433,6 +433,19 @@ export class IndexUpdateService {
             return this._actions$.pipe(
               scan((acc: ColumnAddition[], action) => {
                 if (action.type === 'add-column') {
+                  const lastPlaceholderIndex = acc.findIndex((column) =>
+                    isPlaceholderColumn(column.name)
+                  );
+
+                  // replace last placeholder with the new column
+                  if (lastPlaceholderIndex !== -1) {
+                    return [
+                      ...acc.slice(0, lastPlaceholderIndex),
+                      action.payload,
+                      ...acc.slice(lastPlaceholderIndex + 1),
+                    ];
+                  }
+
                   return [...acc, action.payload];
                 }
                 if (action.type === 'edit-column') {

@@ -23,6 +23,7 @@ import { isNil } from 'lodash';
 import type { DatatableColumn } from '@kbn/expressions-plugin/common';
 import { FormattedMessage } from '@kbn/i18n-react';
 import { i18n } from '@kbn/i18n';
+import { isPlaceholderColumn } from '../../utils';
 import type { PendingSave } from '../../index_update_service';
 import { ValueInput } from '../value_input';
 
@@ -58,14 +59,14 @@ export const getValueInputPopover =
       [docId, columnId, rowIndex, colIndex]
     );
 
-    const columnExists = columns.some((col) => col.id === columnId);
+    const isPlaceholder = isPlaceholderColumn(columnId);
 
     let inputWidth: number | undefined;
     if (cellContentsElement) {
       inputWidth = cellContentsElement.getBoundingClientRect().width;
     }
 
-    if (columnExists) {
+    if (!isPlaceholder) {
       return (
         <ValueInput
           onEnter={onEnter}

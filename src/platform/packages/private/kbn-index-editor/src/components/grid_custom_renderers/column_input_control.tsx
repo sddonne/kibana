@@ -8,36 +8,29 @@
  */
 
 import type { EuiDataGridColumn } from '@elastic/eui';
-import { CustomGridColumnProps, type EuiDataGridRefProps } from '@kbn/unified-data-table';
+import { CustomGridColumnProps } from '@kbn/unified-data-table';
 import { EuiFieldText, EuiButtonEmpty, EuiForm, EuiToolTip, useEuiTheme } from '@elastic/eui';
-import React, { useState, KeyboardEvent, FocusEvent, RefObject } from 'react';
+import React, { useState, KeyboardEvent, HTMLAttributes } from 'react';
 import { FormattedMessage } from '@kbn/i18n-react';
+import { isPlaceholderColumn } from '../../utils';
 import { IndexUpdateService } from '../../index_update_service';
 import { useAddColumnName } from '../../hooks/use_add_column_name';
-import { COLUMN_PLACEHOLDER_PREFIX } from '../../constants';
 
 export const getColumnInputRenderer = (
   columnName: string,
-  indexUpdateService: IndexUpdateService,
-  dataTableRef: RefObject<EuiDataGridRefProps>
+  indexUpdateService: IndexUpdateService
 ): ((props: CustomGridColumnProps) => EuiDataGridColumn) => {
-  const isPlaceholderColumn = columnName.startsWith(COLUMN_PLACEHOLDER_PREFIX);
+  const isPlaceholder = isPlaceholderColumn(columnName);
 
   return ({ column }) => ({
     ...column,
-    display: (
-      <AddColumnHeader
-        initialColumnName={columnName}
-        containerId={column.id}
-        dataTableRef={dataTableRef}
-      />
-    ),
+    display: <AddColumnHeader initialColumnName={columnName} containerId={column.id} />,
     displayHeaderCellProps: {
       'data-column-id': column.id,
-    },
+    } as HTMLAttributes<HTMLElement>,
     actions: {
       showHide: false,
-      additional: isPlaceholderColumn
+      additional: !isPlaceholder
         ? [
             {
               label: (
@@ -59,16 +52,11 @@ export const getColumnInputRenderer = (
 };
 
 interface AddColumnHeaderProps {
-  initialColumnName?: string;
+  initialColumnName: string;
   containerId: string;
-  dataTableRef: RefObject<EuiDataGridRefProps>;
 }
 
-export const AddColumnHeader = ({
-  initialColumnName,
-  containerId,
-  dataTableRef,
-}: AddColumnHeaderProps) => {
+export const AddColumnHeader = ({ initialColumnName, containerId }: AddColumnHeaderProps) => {
   const { euiTheme } = useEuiTheme();
   const { columnName, setColumnName, saveColumn, validationError } =
     useAddColumnName(initialColumnName);
@@ -77,7 +65,6 @@ export const AddColumnHeader = ({
 
   const focusContainer = (focusContainerId: string) =>
     requestAnimationFrame(() => {
-      // HD needed?
       const containerElement = document.querySelector<HTMLElement>(
         `[data-column-id="${focusContainerId}"]`
       );
@@ -97,9 +84,7 @@ export const AddColumnHeader = ({
     }
   };
 
-  const isPlaceholderColumn = initialColumnName?.startsWith(COLUMN_PLACEHOLDER_PREFIX); // HD extract to helper
-
-  const columnLabel = isPlaceholderColumn ? (
+  const columnLabel = isPlaceholderColumn(initialColumnName) ? (
     <FormattedMessage id="indexEditor.flyout.grid.columnHeader.add" defaultMessage="Add a field…" />
   ) : (
     columnName
@@ -128,14 +113,9 @@ export const AddColumnHeader = ({
               setIsEditing(false);
             }}
             onKeyDown={(e: KeyboardEvent) => {
-              // e.stopPropagation();
-              if (['ArrowLeft', 'ArrowUp', 'ArrowDown', 'ArrowRight'].includes(e.key)) {
-                e.stopPropagation();
-              }
+              e.stopPropagation();
               if (e.key === 'Escape') {
                 e.preventDefault();
-                e.stopPropagation();
-                setColumnName('');
                 setIsEditing(false);
                 focusContainer(containerId);
               }
@@ -153,7 +133,6 @@ export const AddColumnHeader = ({
 
   return (
     <EuiButtonEmpty
-      // autoFocus
       css={{
         color: euiTheme.colors.textSubdued,
         width: '100%',
@@ -171,12 +150,10 @@ export const AddColumnHeader = ({
         e.stopPropagation();
         if (e.key === 'Enter') {
           setIsEditing(true);
-        } else {
+        }
+        if (e.key === 'Escape') {
           focusContainer(containerId);
         }
-      }}
-      onFocus={(e: FocusEvent) => {
-        // setIsEditing(true);
       }}
     >
       {columnLabel}
