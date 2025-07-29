@@ -110,6 +110,7 @@ export const SavedPlaygroundFormProvider = ({
   const form = useForm<SavedPlaygroundForm>({
     defaultValues: fetchSavedPlayground(playgroundId, { http, client, setLoadErrors }),
     resolver: savedPlaygroundFormResolver,
+    mode: 'onChange',
     reValidateMode: 'onChange',
     context: { http },
   });
