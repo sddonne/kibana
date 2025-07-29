@@ -812,6 +812,26 @@
     "functions": [
       {
         "parentPluginId": "@kbn/scout",
+        "id": "def-common.apiTest",
+        "type": "Function",
+        "tags": [],
+        "label": "apiTest",
+        "description": [
+          "\nAPI test type with minimal fixtures.\nThis is used for Scout api tests that do not require browser interaction."
+        ],
+        "signature": [
+          "TestType",
+          "<{}, ",
+          "ApiWorkerFixtures",
+          ">"
+        ],
+        "path": "src/platform/packages/shared/kbn-scout/src/playwright/test/api/index.ts",
+        "deprecated": false,
+        "trackAdoption": false,
+        "initialIsOpen": false
+      },
+      {
+        "parentPluginId": "@kbn/scout",
         "id": "def-common.browserAuthFixture",
         "type": "Function",
         "tags": [],
@@ -837,51 +857,11 @@
           "PlaywrightWorkerArgs",
           " & ",
           "PlaywrightWorkerOptions",
-          " & { log: ",
-          {
-            "pluginId": "@kbn/scout",
-            "scope": "common",
-            "docId": "kibKbnScoutPluginApi",
-            "section": "def-common.ScoutLogger",
-            "text": "ScoutLogger"
-          },
-          "; config: ",
-          {
-            "pluginId": "@kbn/scout",
-            "scope": "common",
-            "docId": "kibKbnScoutPluginApi",
-            "section": "def-common.ScoutTestConfig",
-            "text": "ScoutTestConfig"
-          },
-          "; kbnUrl: ",
-          {
-            "pluginId": "@kbn/scout",
-            "scope": "common",
-            "docId": "kibKbnScoutPluginApi",
-            "section": "def-common.KibanaUrl",
-            "text": "KibanaUrl"
-          },
-          "; esClient: ",
-          "default",
-          "; kbnClient: ",
-          {
-            "pluginId": "@kbn/test",
-            "scope": "common",
-            "docId": "kibKbnTestPluginApi",
-            "section": "def-common.KbnClient",
-            "text": "KbnClient"
-          },
-          "; samlAuth: ",
-          {
-            "pluginId": "@kbn/scout",
-            "scope": "common",
-            "docId": "kibKbnScoutPluginApi",
-            "section": "def-common.SamlAuth",
-            "text": "SamlAuth"
-          },
-          "; }>"
+          " & ",
+          "CoreWorkerFixtures",
+          ">"
         ],
-        "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/test/browser_auth/index.ts",
+        "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/scope/test/browser_auth/index.ts",
         "deprecated": false,
         "trackAdoption": false,
         "initialIsOpen": false
@@ -1111,49 +1091,9 @@
           "PlaywrightWorkerArgs",
           " & ",
           "PlaywrightWorkerOptions",
-          " & { log: ",
-          {
-            "pluginId": "@kbn/scout",
-            "scope": "common",
-            "docId": "kibKbnScoutPluginApi",
-            "section": "def-common.ScoutLogger",
-            "text": "ScoutLogger"
-          },
-          "; config: ",
-          {
-            "pluginId": "@kbn/scout",
-            "scope": "common",
-            "docId": "kibKbnScoutPluginApi",
-            "section": "def-common.ScoutTestConfig",
-            "text": "ScoutTestConfig"
-          },
-          "; kbnUrl: ",
-          {
-            "pluginId": "@kbn/scout",
-            "scope": "common",
-            "docId": "kibKbnScoutPluginApi",
-            "section": "def-common.KibanaUrl",
-            "text": "KibanaUrl"
-          },
-          "; esClient: ",
-          "default",
-          "; kbnClient: ",
-          {
-            "pluginId": "@kbn/test",
-            "scope": "common",
-            "docId": "kibKbnTestPluginApi",
-            "section": "def-common.KbnClient",
-            "text": "KbnClient"
-          },
-          "; samlAuth: ",
-          {
-            "pluginId": "@kbn/scout",
-            "scope": "common",
-            "docId": "kibKbnScoutPluginApi",
-            "section": "def-common.SamlAuth",
-            "text": "SamlAuth"
-          },
-          "; } & { esArchiver: ",
+          " & ",
+          "CoreWorkerFixtures",
+          " & { esArchiver: ",
           "EsArchiverFixture",
           "; } & ",
           {
@@ -1173,7 +1113,7 @@
           },
           "; }>"
         ],
-        "path": "src/platform/packages/shared/kbn-scout/src/playwright/index.ts",
+        "path": "src/platform/packages/shared/kbn-scout/src/playwright/test/ui/index.ts",
         "deprecated": false,
         "trackAdoption": false,
         "initialIsOpen": false
@@ -1233,49 +1173,9 @@
           "PlaywrightWorkerArgs",
           " & ",
           "PlaywrightWorkerOptions",
-          " & { log: ",
-          {
-            "pluginId": "@kbn/scout",
-            "scope": "common",
-            "docId": "kibKbnScoutPluginApi",
-            "section": "def-common.ScoutLogger",
-            "text": "ScoutLogger"
-          },
-          "; config: ",
-          {
-            "pluginId": "@kbn/scout",
-            "scope": "common",
-            "docId": "kibKbnScoutPluginApi",
-            "section": "def-common.ScoutTestConfig",
-            "text": "ScoutTestConfig"
-          },
-          "; kbnUrl: ",
-          {
-            "pluginId": "@kbn/scout",
-            "scope": "common",
-            "docId": "kibKbnScoutPluginApi",
-            "section": "def-common.KibanaUrl",
-            "text": "KibanaUrl"
-          },
-          "; esClient: ",
-          "default",
-          "; kbnClient: ",
-          {
-            "pluginId": "@kbn/test",
-            "scope": "common",
-            "docId": "kibKbnTestPluginApi",
-            "section": "def-common.KbnClient",
-            "text": "KbnClient"
-          },
-          "; samlAuth: ",
-          {
-            "pluginId": "@kbn/scout",
-            "scope": "common",
-            "docId": "kibKbnScoutPluginApi",
-            "section": "def-common.SamlAuth",
-            "text": "SamlAuth"
-          },
-          "; } & { esArchiver: ",
+          " & ",
+          "CoreWorkerFixtures",
+          " & { esArchiver: ",
           "EsArchiverFixture",
           "; } & { uiSettings: ",
           "UiSettingsFixture",
@@ -1313,7 +1213,7 @@
           },
           "; } & { debuggingPort: number; } & { debuggingPort: number; }>"
         ],
-        "path": "src/platform/packages/shared/kbn-scout/src/playwright/index.ts",
+        "path": "src/platform/packages/shared/kbn-scout/src/playwright/test/ui/index.ts",
         "deprecated": false,
         "trackAdoption": false,
         "initialIsOpen": false
@@ -1552,49 +1452,9 @@
           "PlaywrightWorkerArgs",
           " & ",
           "PlaywrightWorkerOptions",
-          " & { log: ",
-          {
-            "pluginId": "@kbn/scout",
-            "scope": "common",
-            "docId": "kibKbnScoutPluginApi",
-            "section": "def-common.ScoutLogger",
-            "text": "ScoutLogger"
-          },
-          "; config: ",
-          {
-            "pluginId": "@kbn/scout",
-            "scope": "common",
-            "docId": "kibKbnScoutPluginApi",
-            "section": "def-common.ScoutTestConfig",
-            "text": "ScoutTestConfig"
-          },
-          "; kbnUrl: ",
-          {
-            "pluginId": "@kbn/scout",
-            "scope": "common",
-            "docId": "kibKbnScoutPluginApi",
-            "section": "def-common.KibanaUrl",
-            "text": "KibanaUrl"
-          },
-          "; esClient: ",
-          "default",
-          "; kbnClient: ",
-          {
-            "pluginId": "@kbn/test",
-            "scope": "common",
-            "docId": "kibKbnTestPluginApi",
-            "section": "def-common.KbnClient",
-            "text": "KbnClient"
-          },
-          "; samlAuth: ",
-          {
-            "pluginId": "@kbn/scout",
-            "scope": "common",
-            "docId": "kibKbnScoutPluginApi",
-            "section": "def-common.SamlAuth",
-            "text": "SamlAuth"
-          },
-          "; } & { scoutSpace: ",
+          " & ",
+          "CoreWorkerFixtures",
+          " & { scoutSpace: ",
           "ScoutSpaceParallelFixture",
           "; } & { apiServices: ",
           {
@@ -1634,7 +1494,7 @@
           },
           "; }>"
         ],
-        "path": "src/platform/packages/shared/kbn-scout/src/playwright/index.ts",
+        "path": "src/platform/packages/shared/kbn-scout/src/playwright/test/ui/index.ts",
         "deprecated": false,
         "trackAdoption": false,
         "initialIsOpen": false
@@ -1690,49 +1550,9 @@
           "PlaywrightWorkerArgs",
           " & ",
           "PlaywrightWorkerOptions",
-          " & { log: ",
-          {
-            "pluginId": "@kbn/scout",
-            "scope": "common",
-            "docId": "kibKbnScoutPluginApi",
-            "section": "def-common.ScoutLogger",
-            "text": "ScoutLogger"
-          },
-          "; config: ",
-          {
-            "pluginId": "@kbn/scout",
-            "scope": "common",
-            "docId": "kibKbnScoutPluginApi",
-            "section": "def-common.ScoutTestConfig",
-            "text": "ScoutTestConfig"
-          },
-          "; kbnUrl: ",
-          {
-            "pluginId": "@kbn/scout",
-            "scope": "common",
-            "docId": "kibKbnScoutPluginApi",
-            "section": "def-common.KibanaUrl",
-            "text": "KibanaUrl"
-          },
-          "; esClient: ",
-          "default",
-          "; kbnClient: ",
-          {
-            "pluginId": "@kbn/test",
-            "scope": "common",
-            "docId": "kibKbnTestPluginApi",
-            "section": "def-common.KbnClient",
-            "text": "KbnClient"
-          },
-          "; samlAuth: ",
-          {
-            "pluginId": "@kbn/scout",
-            "scope": "common",
-            "docId": "kibKbnScoutPluginApi",
-            "section": "def-common.SamlAuth",
-            "text": "SamlAuth"
-          },
-          "; } & { esArchiver: ",
+          " & ",
+          "CoreWorkerFixtures",
+          " & { esArchiver: ",
           "EsArchiverFixture",
           "; } & { uiSettings: ",
           "UiSettingsFixture",
@@ -1770,7 +1590,7 @@
           },
           "; }>"
         ],
-        "path": "src/platform/packages/shared/kbn-scout/src/playwright/index.ts",
+        "path": "src/platform/packages/shared/kbn-scout/src/playwright/test/ui/index.ts",
         "deprecated": false,
         "trackAdoption": false,
         "initialIsOpen": false
@@ -1810,7 +1630,7 @@
         "tags": [],
         "label": "ApiServicesFixture",
         "description": [],
-        "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/worker/apis/index.ts",
+        "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/scope/worker/apis/index.ts",
         "deprecated": false,
         "trackAdoption": false,
         "children": [
@@ -1824,7 +1644,7 @@
             "signature": [
               "FleetApiService"
             ],
-            "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/worker/apis/index.ts",
+            "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/scope/worker/apis/index.ts",
             "deprecated": false,
             "trackAdoption": false
           },
@@ -1838,7 +1658,7 @@
             "signature": [
               "StreamsApiService"
             ],
-            "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/worker/apis/index.ts",
+            "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/scope/worker/apis/index.ts",
             "deprecated": false,
             "trackAdoption": false
           },
@@ -1852,7 +1672,7 @@
             "signature": [
               "CoreApiService"
             ],
-            "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/worker/apis/index.ts",
+            "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/scope/worker/apis/index.ts",
             "deprecated": false,
             "trackAdoption": false
           }
@@ -1866,7 +1686,7 @@
         "tags": [],
         "label": "BrowserAuthFixture",
         "description": [],
-        "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/test/browser_auth/index.ts",
+        "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/scope/test/browser_auth/index.ts",
         "deprecated": false,
         "trackAdoption": false,
         "children": [
@@ -1882,7 +1702,7 @@
             "signature": [
               "() => Promise<void>"
             ],
-            "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/test/browser_auth/index.ts",
+            "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/scope/test/browser_auth/index.ts",
             "deprecated": false,
             "trackAdoption": false,
             "children": [],
@@ -1902,7 +1722,7 @@
             "signature": [
               "() => Promise<void>"
             ],
-            "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/test/browser_auth/index.ts",
+            "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/scope/test/browser_auth/index.ts",
             "deprecated": false,
             "trackAdoption": false,
             "children": [],
@@ -1922,7 +1742,7 @@
             "signature": [
               "() => Promise<void>"
             ],
-            "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/test/browser_auth/index.ts",
+            "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/scope/test/browser_auth/index.ts",
             "deprecated": false,
             "trackAdoption": false,
             "children": [],
@@ -1942,7 +1762,7 @@
             "signature": [
               "(role: string) => Promise<void>"
             ],
-            "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/test/browser_auth/index.ts",
+            "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/scope/test/browser_auth/index.ts",
             "deprecated": false,
             "trackAdoption": false,
             "children": [
@@ -1958,7 +1778,7 @@
                 "signature": [
                   "string"
                 ],
-                "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/test/browser_auth/index.ts",
+                "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/scope/test/browser_auth/index.ts",
                 "deprecated": false,
                 "trackAdoption": false,
                 "isRequired": true
@@ -1988,7 +1808,7 @@
               },
               ") => Promise<void>"
             ],
-            "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/test/browser_auth/index.ts",
+            "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/scope/test/browser_auth/index.ts",
             "deprecated": false,
             "trackAdoption": false,
             "children": [
@@ -2010,7 +1830,7 @@
                     "text": "KibanaRole"
                   }
                 ],
-                "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/test/browser_auth/index.ts",
+                "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/scope/test/browser_auth/index.ts",
                 "deprecated": false,
                 "trackAdoption": false,
                 "isRequired": true
@@ -7075,12 +6895,54 @@
       },
       {
         "parentPluginId": "@kbn/scout",
+        "id": "def-common.RoleApiCredentials",
+        "type": "Interface",
+        "tags": [],
+        "label": "RoleApiCredentials",
+        "description": [],
+        "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/scope/worker/api_key.ts",
+        "deprecated": false,
+        "trackAdoption": false,
+        "children": [
+          {
+            "parentPluginId": "@kbn/scout",
+            "id": "def-common.RoleApiCredentials.apiKey",
+            "type": "Object",
+            "tags": [],
+            "label": "apiKey",
+            "description": [],
+            "signature": [
+              "ApiKey"
+            ],
+            "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/scope/worker/api_key.ts",
+            "deprecated": false,
+            "trackAdoption": false
+          },
+          {
+            "parentPluginId": "@kbn/scout",
+            "id": "def-common.RoleApiCredentials.apiKeyHeader",
+            "type": "Object",
+            "tags": [],
+            "label": "apiKeyHeader",
+            "description": [],
+            "signature": [
+              "ApiKeyHeader"
+            ],
+            "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/scope/worker/api_key.ts",
+            "deprecated": false,
+            "trackAdoption": false
+          }
+        ],
+        "initialIsOpen": false
+      },
+      {
+        "parentPluginId": "@kbn/scout",
         "id": "def-common.SamlAuth",
         "type": "Interface",
         "tags": [],
         "label": "SamlAuth",
         "description": [],
-        "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/worker/core_fixtures.ts",
+        "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/scope/worker/core_fixtures.ts",
         "deprecated": false,
         "trackAdoption": false,
         "children": [
@@ -7100,7 +6962,7 @@
                 "text": "SamlSessionManager"
               }
             ],
-            "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/worker/core_fixtures.ts",
+            "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/scope/worker/core_fixtures.ts",
             "deprecated": false,
             "trackAdoption": false
           },
@@ -7111,7 +6973,7 @@
             "tags": [],
             "label": "customRoleName",
             "description": [],
-            "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/worker/core_fixtures.ts",
+            "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/scope/worker/core_fixtures.ts",
             "deprecated": false,
             "trackAdoption": false
           },
@@ -7141,7 +7003,7 @@
               },
               ") => Promise<void>"
             ],
-            "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/worker/core_fixtures.ts",
+            "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/scope/worker/core_fixtures.ts",
             "deprecated": false,
             "trackAdoption": false,
             "children": [
@@ -7169,7 +7031,7 @@
                     "text": "ElasticsearchRoleDescriptor"
                   }
                 ],
-                "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/worker/core_fixtures.ts",
+                "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/scope/worker/core_fixtures.ts",
                 "deprecated": false,
                 "trackAdoption": false,
                 "isRequired": true
@@ -7187,7 +7049,7 @@
         "tags": [],
         "label": "ScoutParallelTestFixtures",
         "description": [],
-        "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/parallel_run_fixtures.ts",
+        "path": "src/platform/packages/shared/kbn-scout/src/playwright/test/ui/parallel_run_fixtures.ts",
         "deprecated": false,
         "trackAdoption": false,
         "children": [
@@ -7207,7 +7069,7 @@
                 "text": "BrowserAuthFixture"
               }
             ],
-            "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/parallel_run_fixtures.ts",
+            "path": "src/platform/packages/shared/kbn-scout/src/playwright/test/ui/parallel_run_fixtures.ts",
             "deprecated": false,
             "trackAdoption": false
           },
@@ -7236,7 +7098,7 @@
               "ElementHandle",
               "<HTMLElement | SVGElement> | null>; typeWithDelay: (selector: string, text: string, options?: { delay: number; } | undefined) => Promise<void>; clearInput: (selector: string) => Promise<void>; }; }"
             ],
-            "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/parallel_run_fixtures.ts",
+            "path": "src/platform/packages/shared/kbn-scout/src/playwright/test/ui/parallel_run_fixtures.ts",
             "deprecated": false,
             "trackAdoption": false
           },
@@ -7256,7 +7118,7 @@
                 "text": "PageObjects"
               }
             ],
-            "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/parallel_run_fixtures.ts",
+            "path": "src/platform/packages/shared/kbn-scout/src/playwright/test/ui/parallel_run_fixtures.ts",
             "deprecated": false,
             "trackAdoption": false
           }
@@ -7270,7 +7132,7 @@
         "tags": [],
         "label": "ScoutParallelWorkerFixtures",
         "description": [],
-        "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/parallel_run_fixtures.ts",
+        "path": "src/platform/packages/shared/kbn-scout/src/playwright/test/ui/parallel_run_fixtures.ts",
         "deprecated": false,
         "trackAdoption": false,
         "children": [
@@ -7290,7 +7152,7 @@
                 "text": "ScoutLogger"
               }
             ],
-            "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/parallel_run_fixtures.ts",
+            "path": "src/platform/packages/shared/kbn-scout/src/playwright/test/ui/parallel_run_fixtures.ts",
             "deprecated": false,
             "trackAdoption": false
           },
@@ -7310,7 +7172,7 @@
                 "text": "ScoutTestConfig"
               }
             ],
-            "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/parallel_run_fixtures.ts",
+            "path": "src/platform/packages/shared/kbn-scout/src/playwright/test/ui/parallel_run_fixtures.ts",
             "deprecated": false,
             "trackAdoption": false
           },
@@ -7330,7 +7192,7 @@
                 "text": "KibanaUrl"
               }
             ],
-            "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/parallel_run_fixtures.ts",
+            "path": "src/platform/packages/shared/kbn-scout/src/playwright/test/ui/parallel_run_fixtures.ts",
             "deprecated": false,
             "trackAdoption": false
           },
@@ -7350,7 +7212,7 @@
                 "text": "KbnClient"
               }
             ],
-            "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/parallel_run_fixtures.ts",
+            "path": "src/platform/packages/shared/kbn-scout/src/playwright/test/ui/parallel_run_fixtures.ts",
             "deprecated": false,
             "trackAdoption": false
           },
@@ -7364,7 +7226,7 @@
             "signature": [
               "default"
             ],
-            "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/parallel_run_fixtures.ts",
+            "path": "src/platform/packages/shared/kbn-scout/src/playwright/test/ui/parallel_run_fixtures.ts",
             "deprecated": false,
             "trackAdoption": false
           },
@@ -7378,7 +7240,7 @@
             "signature": [
               "ScoutSpaceParallelFixture"
             ],
-            "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/parallel_run_fixtures.ts",
+            "path": "src/platform/packages/shared/kbn-scout/src/playwright/test/ui/parallel_run_fixtures.ts",
             "deprecated": false,
             "trackAdoption": false
           },
@@ -7398,7 +7260,7 @@
                 "text": "ApiServicesFixture"
               }
             ],
-            "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/parallel_run_fixtures.ts",
+            "path": "src/platform/packages/shared/kbn-scout/src/playwright/test/ui/parallel_run_fixtures.ts",
             "deprecated": false,
             "trackAdoption": false
           }
@@ -7706,7 +7568,7 @@
         "tags": [],
         "label": "ScoutTestFixtures",
         "description": [],
-        "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/single_thread_fixtures.ts",
+        "path": "src/platform/packages/shared/kbn-scout/src/playwright/test/ui/single_thread_fixtures.ts",
         "deprecated": false,
         "trackAdoption": false,
         "children": [
@@ -7726,7 +7588,7 @@
                 "text": "BrowserAuthFixture"
               }
             ],
-            "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/single_thread_fixtures.ts",
+            "path": "src/platform/packages/shared/kbn-scout/src/playwright/test/ui/single_thread_fixtures.ts",
             "deprecated": false,
             "trackAdoption": false
           },
@@ -7755,7 +7617,7 @@
               "ElementHandle",
               "<HTMLElement | SVGElement> | null>; typeWithDelay: (selector: string, text: string, options?: { delay: number; } | undefined) => Promise<void>; clearInput: (selector: string) => Promise<void>; }; }"
             ],
-            "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/single_thread_fixtures.ts",
+            "path": "src/platform/packages/shared/kbn-scout/src/playwright/test/ui/single_thread_fixtures.ts",
             "deprecated": false,
             "trackAdoption": false
           },
@@ -7775,7 +7637,7 @@
                 "text": "PageObjects"
               }
             ],
-            "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/single_thread_fixtures.ts",
+            "path": "src/platform/packages/shared/kbn-scout/src/playwright/test/ui/single_thread_fixtures.ts",
             "deprecated": false,
             "trackAdoption": false
           },
@@ -7789,7 +7651,7 @@
             "signature": [
               "void"
             ],
-            "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/single_thread_fixtures.ts",
+            "path": "src/platform/packages/shared/kbn-scout/src/playwright/test/ui/single_thread_fixtures.ts",
             "deprecated": false,
             "trackAdoption": false
           }
@@ -7881,7 +7743,7 @@
             "text": "ApiServicesFixture"
           }
         ],
-        "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/single_thread_fixtures.ts",
+        "path": "src/platform/packages/shared/kbn-scout/src/playwright/test/ui/single_thread_fixtures.ts",
         "deprecated": false,
         "trackAdoption": false,
         "children": [
@@ -7901,7 +7763,7 @@
                 "text": "ScoutLogger"
               }
             ],
-            "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/single_thread_fixtures.ts",
+            "path": "src/platform/packages/shared/kbn-scout/src/playwright/test/ui/single_thread_fixtures.ts",
             "deprecated": false,
             "trackAdoption": false
           },
@@ -7921,7 +7783,7 @@
                 "text": "ScoutTestConfig"
               }
             ],
-            "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/single_thread_fixtures.ts",
+            "path": "src/platform/packages/shared/kbn-scout/src/playwright/test/ui/single_thread_fixtures.ts",
             "deprecated": false,
             "trackAdoption": false
           },
@@ -7941,7 +7803,7 @@
                 "text": "KibanaUrl"
               }
             ],
-            "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/single_thread_fixtures.ts",
+            "path": "src/platform/packages/shared/kbn-scout/src/playwright/test/ui/single_thread_fixtures.ts",
             "deprecated": false,
             "trackAdoption": false
           },
@@ -7961,7 +7823,7 @@
                 "text": "KbnClient"
               }
             ],
-            "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/single_thread_fixtures.ts",
+            "path": "src/platform/packages/shared/kbn-scout/src/playwright/test/ui/single_thread_fixtures.ts",
             "deprecated": false,
             "trackAdoption": false
           },
@@ -7975,7 +7837,7 @@
             "signature": [
               "default"
             ],
-            "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/single_thread_fixtures.ts",
+            "path": "src/platform/packages/shared/kbn-scout/src/playwright/test/ui/single_thread_fixtures.ts",
             "deprecated": false,
             "trackAdoption": false
           },
@@ -7989,7 +7851,7 @@
             "signature": [
               "EsArchiverFixture"
             ],
-            "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/single_thread_fixtures.ts",
+            "path": "src/platform/packages/shared/kbn-scout/src/playwright/test/ui/single_thread_fixtures.ts",
             "deprecated": false,
             "trackAdoption": false
           },
@@ -8003,7 +7865,7 @@
             "signature": [
               "UiSettingsFixture"
             ],
-            "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/single_thread_fixtures.ts",
+            "path": "src/platform/packages/shared/kbn-scout/src/playwright/test/ui/single_thread_fixtures.ts",
             "deprecated": false,
             "trackAdoption": false
           },
@@ -8023,7 +7885,7 @@
                 "text": "ApiServicesFixture"
               }
             ],
-            "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/single_thread_fixtures.ts",
+            "path": "src/platform/packages/shared/kbn-scout/src/playwright/test/ui/single_thread_fixtures.ts",
             "deprecated": false,
             "trackAdoption": false
           },
@@ -8057,7 +7919,7 @@
               "Readable",
               ") => NodeJS.WritableStream) | undefined) => Promise<void>; }"
             ],
-            "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/single_thread_fixtures.ts",
+            "path": "src/platform/packages/shared/kbn-scout/src/playwright/test/ui/single_thread_fixtures.ts",
             "deprecated": false,
             "trackAdoption": false
           },
@@ -8091,7 +7953,7 @@
               "Readable",
               ") => NodeJS.WritableStream) | undefined) => Promise<void>; }"
             ],
-            "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/single_thread_fixtures.ts",
+            "path": "src/platform/packages/shared/kbn-scout/src/playwright/test/ui/single_thread_fixtures.ts",
             "deprecated": false,
             "trackAdoption": false
           }
@@ -8105,7 +7967,7 @@
         "tags": [],
         "label": "SynthtraceFixture",
         "description": [],
-        "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/worker/synthtrace.ts",
+        "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/scope/worker/synthtrace.ts",
         "deprecated": false,
         "trackAdoption": false,
         "children": [
@@ -8139,7 +8001,7 @@
               "Readable",
               ") => NodeJS.WritableStream) | undefined) => Promise<void>; }"
             ],
-            "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/worker/synthtrace.ts",
+            "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/scope/worker/synthtrace.ts",
             "deprecated": false,
             "trackAdoption": false
           },
@@ -8173,7 +8035,7 @@
               "Readable",
               ") => NodeJS.WritableStream) | undefined) => Promise<void>; }"
             ],
-            "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/worker/synthtrace.ts",
+            "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/scope/worker/synthtrace.ts",
             "deprecated": false,
             "trackAdoption": false
           },
@@ -8207,7 +8069,7 @@
               "Readable",
               ") => NodeJS.WritableStream) | undefined) => Promise<void>; }"
             ],
-            "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/worker/synthtrace.ts",
+            "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/scope/worker/synthtrace.ts",
             "deprecated": false,
             "trackAdoption": false
           }
@@ -8244,7 +8106,7 @@
           "ElementHandle",
           "<HTMLElement | SVGElement> | null>; typeWithDelay: (selector: string, text: string, options?: { delay: number; } | undefined) => Promise<void>; clearInput: (selector: string) => Promise<void>; }; }"
         ],
-        "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/test/scout_page/index.ts",
+        "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/scope/test/scout_page/index.ts",
         "deprecated": false,
         "trackAdoption": false,
         "initialIsOpen": false

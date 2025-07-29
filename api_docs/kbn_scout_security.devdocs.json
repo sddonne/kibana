@@ -1035,49 +1035,9 @@
           "PlaywrightWorkerArgs",
           " & ",
           "PlaywrightWorkerOptions",
-          " & { log: ",
-          {
-            "pluginId": "@kbn/scout",
-            "scope": "common",
-            "docId": "kibKbnScoutPluginApi",
-            "section": "def-common.ScoutLogger",
-            "text": "ScoutLogger"
-          },
-          "; config: ",
-          {
-            "pluginId": "@kbn/scout",
-            "scope": "common",
-            "docId": "kibKbnScoutPluginApi",
-            "section": "def-common.ScoutTestConfig",
-            "text": "ScoutTestConfig"
-          },
-          "; kbnUrl: ",
-          {
-            "pluginId": "@kbn/scout",
-            "scope": "common",
-            "docId": "kibKbnScoutPluginApi",
-            "section": "def-common.KibanaUrl",
-            "text": "KibanaUrl"
-          },
-          "; esClient: ",
-          "default",
-          "; kbnClient: ",
-          {
-            "pluginId": "@kbn/test",
-            "scope": "common",
-            "docId": "kibKbnTestPluginApi",
-            "section": "def-common.KbnClient",
-            "text": "KbnClient"
-          },
-          "; samlAuth: ",
-          {
-            "pluginId": "@kbn/scout",
-            "scope": "common",
-            "docId": "kibKbnScoutPluginApi",
-            "section": "def-common.SamlAuth",
-            "text": "SamlAuth"
-          },
-          "; } & { esArchiver: ",
+          " & ",
+          "CoreWorkerFixtures",
+          " & { esArchiver: ",
           "EsArchiverFixture",
           "; } & ",
           {
@@ -1097,7 +1057,7 @@
           },
           "; }>"
         ],
-        "path": "src/platform/packages/shared/kbn-scout/src/playwright/index.ts",
+        "path": "src/platform/packages/shared/kbn-scout/src/playwright/test/ui/index.ts",
         "deprecated": false,
         "trackAdoption": false,
         "initialIsOpen": false
@@ -1149,49 +1109,9 @@
           "PlaywrightWorkerArgs",
           " & ",
           "PlaywrightWorkerOptions",
-          " & { log: ",
-          {
-            "pluginId": "@kbn/scout",
-            "scope": "common",
-            "docId": "kibKbnScoutPluginApi",
-            "section": "def-common.ScoutLogger",
-            "text": "ScoutLogger"
-          },
-          "; config: ",
-          {
-            "pluginId": "@kbn/scout",
-            "scope": "common",
-            "docId": "kibKbnScoutPluginApi",
-            "section": "def-common.ScoutTestConfig",
-            "text": "ScoutTestConfig"
-          },
-          "; kbnUrl: ",
-          {
-            "pluginId": "@kbn/scout",
-            "scope": "common",
-            "docId": "kibKbnScoutPluginApi",
-            "section": "def-common.KibanaUrl",
-            "text": "KibanaUrl"
-          },
-          "; esClient: ",
-          "default",
-          "; kbnClient: ",
-          {
-            "pluginId": "@kbn/test",
-            "scope": "common",
-            "docId": "kibKbnTestPluginApi",
-            "section": "def-common.KbnClient",
-            "text": "KbnClient"
-          },
-          "; samlAuth: ",
-          {
-            "pluginId": "@kbn/scout",
-            "scope": "common",
-            "docId": "kibKbnScoutPluginApi",
-            "section": "def-common.SamlAuth",
-            "text": "SamlAuth"
-          },
-          "; } & { scoutSpace: ",
+          " & ",
+          "CoreWorkerFixtures",
+          " & { scoutSpace: ",
           "ScoutSpaceParallelFixture",
           "; } & { apiServices: ",
           {
@@ -1303,49 +1223,9 @@
           "PlaywrightWorkerArgs",
           " & ",
           "PlaywrightWorkerOptions",
-          " & { log: ",
-          {
-            "pluginId": "@kbn/scout",
-            "scope": "common",
-            "docId": "kibKbnScoutPluginApi",
-            "section": "def-common.ScoutLogger",
-            "text": "ScoutLogger"
-          },
-          "; config: ",
-          {
-            "pluginId": "@kbn/scout",
-            "scope": "common",
-            "docId": "kibKbnScoutPluginApi",
-            "section": "def-common.ScoutTestConfig",
-            "text": "ScoutTestConfig"
-          },
-          "; kbnUrl: ",
-          {
-            "pluginId": "@kbn/scout",
-            "scope": "common",
-            "docId": "kibKbnScoutPluginApi",
-            "section": "def-common.KibanaUrl",
-            "text": "KibanaUrl"
-          },
-          "; esClient: ",
-          "default",
-          "; kbnClient: ",
-          {
-            "pluginId": "@kbn/test",
-            "scope": "common",
-            "docId": "kibKbnTestPluginApi",
-            "section": "def-common.KbnClient",
-            "text": "KbnClient"
-          },
-          "; samlAuth: ",
-          {
-            "pluginId": "@kbn/scout",
-            "scope": "common",
-            "docId": "kibKbnScoutPluginApi",
-            "section": "def-common.SamlAuth",
-            "text": "SamlAuth"
-          },
-          "; } & { esArchiver: ",
+          " & ",
+          "CoreWorkerFixtures",
+          " & { esArchiver: ",
           "EsArchiverFixture",
           "; } & { uiSettings: ",
           "UiSettingsFixture",
@@ -6345,7 +6225,7 @@
           "ElementHandle",
           "<HTMLElement | SVGElement> | null>; typeWithDelay: (selector: string, text: string, options?: { delay: number; } | undefined) => Promise<void>; clearInput: (selector: string) => Promise<void>; }; }"
         ],
-        "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/test/scout_page/index.ts",
+        "path": "src/platform/packages/shared/kbn-scout/src/playwright/fixtures/scope/test/scout_page/index.ts",
         "deprecated": false,
         "trackAdoption": false,
         "initialIsOpen": false

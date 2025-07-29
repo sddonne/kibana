@@ -150,6 +150,7 @@
     "@kbn/rule-registry-plugin",
     "@kbn/controls-plugin",
     "@kbn/global-search-plugin",
-    "@kbn/global-search-test-plugin"
+    "@kbn/global-search-test-plugin",
+    "@kbn/remote-clusters-plugin"
   ]
 }
