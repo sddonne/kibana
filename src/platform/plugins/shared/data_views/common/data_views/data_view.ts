@@ -102,11 +102,6 @@ export class DataView extends AbstractDataView implements DataViewBase {
     const enrichedSpec: DataViewSpec = {
       ...baseSpec,
       fields,
-      // Clear timeFieldName if the time field is not in the provided fields
-      timeFieldName:
-        baseSpec.timeFieldName && fields[baseSpec.timeFieldName]
-          ? baseSpec.timeFieldName
-          : undefined,
     };
 
     return new DataView({
@@ -268,6 +263,9 @@ export class DataView extends AbstractDataView implements DataViewBase {
    */
 
   isTimeBased(): this is TimeBasedDataView {
+    if (this.type === 'esql' && this.timeFieldName) {
+      return true;
+    }
     return !!this.timeFieldName && (!this.fields || !!this.getTimeField());
   }
 
