@@ -94,6 +94,11 @@ export class EmbeddableEditorService {
 
   public isEmbeddedEditor = (): boolean => Boolean(this.embeddableState);
 
+  public getEmbeddableId = (): string | undefined => this.embeddableState?.embeddableId;
+
+  public getOriginatingPath = (): string | undefined => this.embeddableState?.originatingPath;
+  public getOriginatingApp = (): string | undefined => this.embeddableState?.originatingApp;
+
   public getByValueTab = (): DiscoverSessionTab | undefined =>
     this.getByValueInput().discoverSessionTab;
 
