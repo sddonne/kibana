@@ -16,4 +16,10 @@ export type {
   DocViewerComponent,
   DocViewerRestorableState,
   DocViewerShareableState,
+  DocViewerHeader,
+  DocViewerHeaderBadge,
+  DocViewerHeaderBlock,
+  DocViewerFooter,
+  DocViewerFooterAction,
+  DocViewerFooterActionMenu,
 } from './services/types';

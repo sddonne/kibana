@@ -18,9 +18,9 @@ import type { DocViewerProps, DocViewsRegistry } from '@kbn/unified-doc-viewer';
 import { DiscoverFlyouts, dismissAllFlyoutsExceptFor } from '@kbn/discover-utils';
 import type { UnifiedDocViewerFlyoutProps } from '@kbn/unified-doc-viewer-plugin/public';
 import { UnifiedDocViewerFlyout } from '@kbn/unified-doc-viewer-plugin/public';
+import type { EuiFlyoutMenuAction } from '@elastic/eui';
 import { useDiscoverServices } from '../../hooks/use_discover_services';
 import { useFlyoutActions } from './use_flyout_actions';
-import { DiscoverGridFlyoutActions } from './discover_grid_flyout_actions';
 import { DocumentType, useProfileAccessor } from '../../context_awareness';
 import { recordHasContext } from '../../context_awareness/profiles_manager/record_has_context';
 
@@ -109,6 +109,34 @@ export function DiscoverGridFlyout({
     savedSearchId,
   });
 
+  // The "View single document" / "View surrounding documents" actions now live in the flyout menu
+  // bar instead of a bespoke subheader, so map them to EuiFlyoutMenuAction descriptors. Items with
+  // an `href` render as links (open-in-new-tab preserved); the rest render as buttons.
+  const flyoutLeadingActions = useMemo<EuiFlyoutMenuAction[] | undefined>(() => {
+    if (isEsqlQuery || !actualHit || flyoutActions.length === 0) {
+      return undefined;
+    }
+
+    return flyoutActions.map((action) =>
+      action.href
+        ? {
+            iconType: action.iconType,
+            href: action.href,
+            onClick: action.onClick,
+            'aria-label': action.label,
+            toolTipContent: action.helpText ?? action.label,
+            'data-test-subj': action.dataTestSubj,
+          }
+        : {
+            iconType: action.iconType,
+            onClick: action.onClick,
+            'aria-label': action.label,
+            toolTipContent: action.helpText ?? action.label,
+            'data-test-subj': action.dataTestSubj,
+          }
+    );
+  }, [isEsqlQuery, actualHit, flyoutActions]);
+
   const getDocViewerAccessor = useProfileAccessor('getDocViewer', {
     record: actualHit,
   });
@@ -132,11 +160,7 @@ export function DiscoverGridFlyout({
     <UnifiedDocViewerFlyout
       originDocType={originDocType}
       flyoutTitle={docViewer?.title}
-      flyoutActions={
-        !isEsqlQuery && actualHit && flyoutActions.length > 0 ? (
-          <DiscoverGridFlyoutActions flyoutActions={flyoutActions} />
-        ) : null
-      }
+      flyoutLeadingActions={flyoutLeadingActions}
       flyoutMenuTrailingActions={flyoutMenuTrailingActions}
       flyoutWidthLocalStorageKey={FLYOUT_WIDTH_KEY}
       flyoutType={flyoutType}

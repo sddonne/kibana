@@ -15,4 +15,10 @@ export type {
   DocView,
   DocViewerComponent,
   DocViewActions,
+  DocViewerHeader,
+  DocViewerHeaderBadge,
+  DocViewerHeaderBlock,
+  DocViewerFooter,
+  DocViewerFooterAction,
+  DocViewerFooterActionMenu,
 } from './src/types';

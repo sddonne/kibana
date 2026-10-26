@@ -24,7 +24,11 @@ import type { CellAction, CellActionExecutionContext, CellActionsData } from '@k
 import type { EuiIconType } from '@elastic/eui/src/components/icon/icon';
 import type { AggregateQuery, Filter, ProjectRouting, Query, TimeRange } from '@kbn/es-query';
 import type { OmitIndexSignature } from 'type-fest';
-import type { DocViewRenderProps } from '@kbn/unified-doc-viewer/types';
+import type {
+  DocViewerFooter,
+  DocViewerHeader,
+  DocViewRenderProps,
+} from '@kbn/unified-doc-viewer/types';
 import type {
   ChartSectionProps,
   UnifiedHistogramTopPanelHeightContext,
@@ -159,9 +163,23 @@ export interface DocViewerExtension {
    */
   docViewsRegistry: (prevRegistry: DocViewsRegistry) => DocViewsRegistry;
   /**
+   * Structured description of the flyout header (badges, titled blocks, description). The flyout maps
+   * it onto the shared flyout-template header parts. Preferred over `renderHeader`.
+   * @param props The doc view render props
+   */
+  getHeader?: (props: DocViewRenderProps) => DocViewerHeader;
+  /**
+   * Structured description of the flyout footer (a take-action menu, or primary/secondary buttons).
+   * The flyout maps it onto the shared flyout-template footer parts. Preferred over `renderFooter`.
+   * @param props The doc view render props
+   */
+  getFooter?: (props: DocViewRenderProps) => DocViewerFooter;
+  /**
    * Optional render function to display a custom header section above the tabs
    * @param props The doc view render props
    * @returns A React element to render above the tabs
+   * @deprecated Use {@link getHeader} instead. Arbitrary header injection is being removed in favor
+   * of structured parts, so flyout chrome stays consistent across Kibana.
    */
   renderHeader?: (props: DocViewRenderProps) => React.ReactElement;
   /**
@@ -169,6 +187,8 @@ export interface DocViewerExtension {
    * The footer is always visible while scrolling through the flyout content.
    * @param props The doc view render props
    * @returns A React element to render at the bottom of the flyout
+   * @deprecated Use {@link getFooter} instead. Arbitrary footer injection is being removed in favor
+   * of structured parts, so flyout chrome stays consistent across Kibana.
    */
   renderFooter?: (props: DocViewRenderProps) => React.ReactElement;
 }

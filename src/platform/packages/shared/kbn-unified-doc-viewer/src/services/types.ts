@@ -14,8 +14,93 @@ import type { DataSource } from '@kbn/data-source';
 import type { EbtClickAttrs } from '@kbn/ebt-click';
 import type { SerializableRecord } from '@kbn/utility-types';
 import type { ZodTypeAny } from '@kbn/zod';
-import type { ReactElement } from 'react';
+import type { ReactElement, ReactNode } from 'react';
+import type { EuiBadgeProps, EuiContextMenuPanelDescriptor, IconType } from '@elastic/eui';
 import type { DocViewsRegistry } from './doc_views_registry';
+
+/*
+ * Structured descriptors for the flyout header/footer. Profiles describe WHAT goes in the header and
+ * footer as structured parts; the flyout is the single layer that maps these onto @kbn/flyout-template
+ * parts. This replaces arbitrary JSX injection (the deprecated renderHeader/renderFooter) so flyout
+ * chrome stays consistent. The structure is fixed; leaf values stay ReactNode, so interactive widgets
+ * (popovers, avatars, switches) remain possible as block/menu content.
+ */
+
+/** A badge rendered in the flyout header (e.g. severity, document category). */
+export interface DocViewerHeaderBadge {
+  id: string;
+  label: ReactNode;
+  color?: EuiBadgeProps['color'];
+  iconType?: IconType;
+  tooltip?: ReactNode;
+}
+
+/** A titled key/value block in the header. `value` may be interactive content. */
+export interface DocViewerHeaderBlock {
+  id: string;
+  /** Plain-text label for the block. */
+  title: string;
+  /** Block value — arbitrary content, interactive widgets allowed. */
+  value: ReactNode;
+  /**
+   * `meta` → compact inline key/value row (template `Header.MetaBlock`);
+   * `info` → larger titled-value grid cell (template `Header.InfoBlock`). Defaults to `meta`.
+   */
+  variant?: 'meta' | 'info';
+  /** `info` only: value text color, passed through to the block. */
+  color?: string;
+  /** `info` only: value font scale. */
+  size?: 'xs' | 's' | 'm' | 'l' | 'xl';
+}
+
+/** Structured flyout header. The title text itself stays on `DocViewerExtension.title`. */
+export interface DocViewerHeader {
+  /** Icon/tooltip adornments for the (separately provided) title. */
+  titleIcon?: IconType;
+  titleTooltip?: ReactNode;
+  /** Secondary text under the title (timestamp, "First seen", …). */
+  description?: ReactNode;
+  /** Header badges. */
+  badges?: DocViewerHeaderBadge[];
+  /** Titled key/value blocks (risk score, status, assignees, …). */
+  blocks?: DocViewerHeaderBlock[];
+}
+
+/** A footer action — renders a button, never an anchor (matches the template). */
+export interface DocViewerFooterAction {
+  id: string;
+  label: string;
+  onClick: () => void;
+  iconType?: IconType;
+  isDisabled?: boolean;
+  /** Shown on hover/focus, e.g. to explain why the action is disabled. */
+  tooltip?: ReactNode;
+}
+
+/** A "take action" menu: a trigger button opening an EuiContextMenu. */
+export interface DocViewerFooterActionMenu {
+  /** Trigger button text (e.g. "Take action"). */
+  label: string;
+  /**
+   * Context-menu panels. Items must use string `name`s (no `renderItem`) so the flyout can map them
+   * onto the template's narrowed menu-panel type.
+   */
+  panels: EuiContextMenuPanelDescriptor[];
+  isDisabled?: boolean;
+  isLoading?: boolean;
+}
+
+/**
+ * Structured flyout footer. Encodes the template's rule in the type: a take-action MENU, or
+ * primary/secondary BUTTONS — never both.
+ */
+export type DocViewerFooter =
+  | { actionMenu: DocViewerFooterActionMenu; primaryAction?: never; secondaryAction?: never }
+  | {
+      actionMenu?: never;
+      primaryAction: DocViewerFooterAction;
+      secondaryAction?: DocViewerFooterAction;
+    };
 
 /**
  * Represents the restorable state for all doc viewer tabs, keyed by tab ID.

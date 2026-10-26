@@ -10,8 +10,19 @@
 import React, { useEffect, useRef, useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { action } from '@storybook/addon-actions';
-import { EuiButton, EuiFlexGroup, EuiFlexItem, EuiSpacer, EuiText } from '@elastic/eui';
+import {
+  EuiButton,
+  EuiCodeBlock,
+  EuiDescriptionList,
+  EuiFlexGroup,
+  EuiFlexItem,
+  EuiSpacer,
+  EuiTabbedContent,
+  EuiText,
+  type EuiTabbedContentTab,
+} from '@elastic/eui';
 import { FlyoutTemplate } from './flyout_template';
+import type { FlyoutFooterMenuPanel, FlyoutTemplateProps } from './types';
 import {
   type SharedStoryArgs,
   buildFlyoutProps,
@@ -748,4 +759,174 @@ export const ErrorInFlyout: Story = {
     numTabs: { table: { disable: true } },
   },
   render: ErrorInFlyoutRender,
+};
+
+/* ----------------------------------------------------------------------------------------------
+ * PoC (throwaway): the Unified Doc Viewer flyout migrated onto FlyoutTemplate, chrome-only.
+ * Mirrors unified_doc_viewer/.../doc_viewer_flyout/doc_viewer_flyout.tsx after a chrome-only migration:
+ *   - prev/next EuiPagination subheader          -> flyoutMenuProps.pagination
+ *   - "View single / surrounding document" links -> flyoutMenuProps.leadingActions (href anchors)
+ *   - copy-link trailing action                  -> flyoutMenuProps.trailingActions
+ *   - "not found in current results" notice      -> Body.Callout
+ *   - the generic <UnifiedDocViewer/> (its own tabs) -> UNCHANGED, as Body passthrough content
+ *   - Security "Take action" footer              -> Footer.PrimaryActionMenu (AI folded in as an item)
+ * -------------------------------------------------------------------------------------------- */
+
+interface PocDoc {
+  id: string;
+  timestamp: string;
+  service: string;
+  level: string;
+  message: string;
+}
+
+const POC_DOCS: PocDoc[] = [
+  { id: 'aX1b', timestamp: '2026-10-23T10:01:21.313Z', service: 'checkout', level: 'error', message: 'Payment gateway timeout after 30s' }, // prettier-ignore
+  { id: 'bY2c', timestamp: '2026-10-23T10:01:19.842Z', service: 'checkout', level: 'warn', message: 'Retrying payment authorization (attempt 2)' }, // prettier-ignore
+  { id: 'cZ3d', timestamp: '2026-10-23T10:01:15.001Z', service: 'cart', level: 'info', message: 'Cart updated: 3 items' }, // prettier-ignore
+  { id: 'dW4e', timestamp: '2026-10-23T10:00:58.117Z', service: 'inventory', level: 'info', message: 'Stock reserved for order 88231' }, // prettier-ignore
+  { id: 'eV5f', timestamp: '2026-10-23T10:00:42.556Z', service: 'auth', level: 'error', message: 'JWT signature verification failed' }, // prettier-ignore
+];
+
+/**
+ * Stand-in for the generic `@kbn/unified-doc-viewer` `DocViewer` (its own `EuiTabbedContent`). In the
+ * real migration this component is NOT modified — it drops into `FlyoutTemplate.Body` exactly as it
+ * drops into `EuiFlyoutBody` today.
+ */
+const MockGenericDocViewer = ({ doc }: { doc: PocDoc }) => {
+  const tabs: EuiTabbedContentTab[] = [
+    {
+      id: 'overview',
+      name: 'Overview',
+      content: (
+        <>
+          <EuiSpacer size="m" />
+          <EuiText size="s">
+            <p>
+              <strong>{doc.service}</strong> — {doc.message}
+            </p>
+          </EuiText>
+        </>
+      ),
+    },
+    {
+      id: 'table',
+      name: 'Table',
+      content: (
+        <>
+          <EuiSpacer size="m" />
+          <EuiDescriptionList
+            type="column"
+            compressed
+            listItems={[
+              { title: '@timestamp', description: doc.timestamp },
+              { title: 'service.name', description: doc.service },
+              { title: 'log.level', description: doc.level },
+              { title: 'message', description: doc.message },
+            ]}
+          />
+        </>
+      ),
+    },
+    {
+      id: 'json',
+      name: 'JSON',
+      content: (
+        <>
+          <EuiSpacer size="m" />
+          <EuiCodeBlock language="json" fontSize="s" paddingSize="s" isCopyable>
+            {JSON.stringify(doc, null, 2)}
+          </EuiCodeBlock>
+        </>
+      ),
+    },
+  ];
+  return (
+    <div className="kbnDocViewer" data-test-subj="kbnDocViewer">
+      <EuiTabbedContent size="s" tabs={tabs} />
+    </div>
+  );
+};
+
+// Security "Take action" menu re-authored as template `panels`; the standalone AI "Add to chat" button
+// is folded in as the first item (the resolution that removes the G3 footer gap).
+const POC_TAKE_ACTION_PANELS: FlyoutFooterMenuPanel[] = [
+  {
+    id: 0,
+    items: [
+      { name: 'Ask AI Assistant', icon: 'sparkles', onClick: action('ask-ai-assistant') },
+      { isSeparator: true },
+      { name: 'Mark as acknowledged', icon: 'eye', onClick: action('acknowledge') },
+      { name: 'Mark as closed', icon: 'check', onClick: action('close') },
+      { isSeparator: true },
+      { name: 'Add to case', icon: 'plusInCircle', onClick: action('add-to-case') },
+      { name: 'Add to timeline', icon: 'timeline', onClick: action('add-to-timeline') },
+      { name: 'Add note', icon: 'pencil', onClick: action('add-note') },
+    ],
+  },
+];
+
+const DocViewerFlyoutPoc = ({ notice, footer }: { notice: boolean; footer: boolean }) => {
+  const [index, setIndex] = useState(0);
+  const doc = POC_DOCS[index];
+
+  // href anchors -> exercises the EuiFlyoutMenuAction anchor variant at runtime (open-in-new-tab kept).
+  const leadingActions: NonNullable<FlyoutTemplateProps['flyoutMenuProps']>['leadingActions'] = [
+    { iconType: 'documents', href: '#surrounding-documents', 'aria-label': 'View surrounding documents', toolTipContent: 'View surrounding documents' }, // prettier-ignore
+    { iconType: 'document', href: '#single-document', 'aria-label': 'View single document', toolTipContent: 'View single document' }, // prettier-ignore
+  ];
+  const trailingActions: NonNullable<FlyoutTemplateProps['flyoutMenuProps']>['trailingActions'] = [
+    { iconType: 'link', onClick: action('copy-link'), 'aria-label': 'Copy link to document', toolTipContent: 'Copy link to document' }, // prettier-ignore
+  ];
+
+  return (
+    <FlyoutTemplate
+      onClose={action('onClose')}
+      type="push"
+      size="m"
+      session="start"
+      resizable
+      ownFocus={false}
+      data-test-subj="docViewerFlyoutPoc"
+      flyoutMenuProps={{
+        title: `Document ${doc.id}`,
+        leadingActions,
+        trailingActions,
+        pagination: {
+          currentIndex: index,
+          total: POC_DOCS.length,
+          onPrevious: () => setIndex((i) => Math.max(0, i - 1)),
+          onNext: () => setIndex((i) => Math.min(POC_DOCS.length - 1, i + 1)),
+        },
+      }}
+    >
+      <FlyoutTemplate.Body>
+        {notice && (
+          <FlyoutTemplate.Body.Callout
+            level="warning"
+            title="Not found in current results"
+            text="This document is not part of the current search results."
+          />
+        )}
+        {/* The generic <UnifiedDocViewer/> drops in here UNCHANGED, as Body passthrough content. */}
+        <MockGenericDocViewer doc={doc} />
+      </FlyoutTemplate.Body>
+      {footer && (
+        <FlyoutTemplate.Footer>
+          <FlyoutTemplate.Footer.PrimaryActionMenu
+            label="Take action"
+            panels={POC_TAKE_ACTION_PANELS}
+          />
+        </FlyoutTemplate.Footer>
+      )}
+    </FlyoutTemplate>
+  );
+};
+
+export const DocViewerPoc: Story = {
+  render: () => <DocViewerFlyoutPoc notice={false} footer />,
+};
+
+export const DocViewerPocWithNotice: Story = {
+  render: () => <DocViewerFlyoutPoc notice footer />,
 };

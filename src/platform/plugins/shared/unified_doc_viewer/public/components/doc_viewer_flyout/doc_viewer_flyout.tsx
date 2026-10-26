@@ -14,21 +14,8 @@ import { DOC_VIEWER_FLYOUT_HISTORY_KEY } from '@kbn/unified-doc-viewer';
 import { i18n } from '@kbn/i18n';
 import type { DataView } from '@kbn/data-views-plugin/public';
 import type { EuiFlyoutMenuAction, EuiFlyoutProps } from '@elastic/eui';
-import {
-  EuiFlexGroup,
-  EuiFlexItem,
-  EuiFlyout,
-  EuiFlyoutBody,
-  EuiFlyoutFooter,
-  EuiHorizontalRule,
-  EuiPagination,
-  EuiPortal,
-  EuiSpacer,
-  isDOMNode,
-  keys,
-  useEuiTheme,
-  useIsWithinMinBreakpoint,
-} from '@elastic/eui';
+import { EuiSpacer, isDOMNode, keys, useEuiTheme, useIsWithinMinBreakpoint } from '@elastic/eui';
+import { FlyoutTemplate } from '@kbn/flyout-template';
 import type { DataTableRecord } from '@kbn/discover-utils/types';
 import type { DataSource } from '@kbn/data-source';
 import useLocalStorage from 'react-use/lib/useLocalStorage';
@@ -51,7 +38,11 @@ export interface UnifiedDocViewerFlyoutProps
   'data-test-subj'?: string;
   flyoutTitle?: string;
   flyoutDefaultWidth?: EuiFlyoutProps['size'];
-  flyoutActions?: React.ReactNode;
+  /**
+   * Actions rendered in the flyout menu bar (leading side), e.g. "View single document" /
+   * "View surrounding documents". Each may be a button or, with `href`, a link.
+   */
+  flyoutLeadingActions?: EuiFlyoutMenuAction[];
   flyoutMenuTrailingActions?: EuiFlyoutMenuAction[];
   flyoutType?: 'push' | 'overlay';
   flyoutWidthLocalStorageKey?: string;
@@ -70,7 +61,7 @@ export interface UnifiedDocViewerFlyoutProps
   requestState?: ElasticRequestState;
   /** Identifies the document behind `requestState`, shown when it can't be resolved. */
   requestStateMeta?: RequestStateMeta;
-  /** Replaces pagination when the document is absent from the current results. */
+  /** Shown at the top of the body when the document is absent from the current results. */
   notice?: ReactNode;
   hits?: DataTableRecord[];
   dataView: DataView;
@@ -105,7 +96,7 @@ export function UnifiedDocViewerFlyout({
   'data-test-subj': dataTestSubj,
   flyoutTitle,
   flyoutDefaultWidth,
-  flyoutActions,
+  flyoutLeadingActions,
   flyoutMenuTrailingActions,
   flyoutType,
   flyoutWidthLocalStorageKey,
@@ -160,8 +151,6 @@ export function UnifiedDocViewerFlyout({
 
     return getIndexByDocId(hits, hit.id);
   }, [hits, hit, pageCount]);
-
-  const renderSubheader = pageCount > 1 || flyoutActions || notice;
 
   const setPage = useCallback(
     (index: number) => {
@@ -255,6 +244,9 @@ export function UnifiedDocViewerFlyout({
       });
   const currentFlyoutTitle = flyoutTitle ?? defaultFlyoutTitle;
   const { a11yProps, screenReaderDescription } = useFlyoutA11y({ isXlScreen });
+  // FlyoutTemplate owns the underlying flyout ref, so the ref-based XL auto-focus can't be wired
+  // through its public API yet (SharedUX gap G4). The remaining a11y attributes still pass through.
+  const { ref: _flyoutRef, ...flyoutA11yProps } = a11yProps;
 
   // Shared history key for the EUI flyout manager: this symbol groups the
   // Document Viewer flyout and any nested flyouts (e.g. Trace Waterfall) into
@@ -265,106 +257,89 @@ export function UnifiedDocViewerFlyout({
   return (
     <FlyoutHistoryKeyContext.Provider value={historyKey}>
       <OriginDocTypeContext.Provider value={originDocType}>
-        <EuiPortal>
-          <EuiFlyout
-            session="start"
-            historyKey={historyKey}
-            flyoutMenuProps={{
-              title: currentFlyoutTitle,
-              'data-test-subj': 'docViewerRowDetailsTitle',
-              hideTitle: false,
-              trailingActions: flyoutMenuTrailingActions,
-            }}
-            className="DiscoverFlyout" // used to override the z-index of the flyout from SecuritySolution
-            onClose={onClose}
-            type={flyoutType ?? 'push'}
-            // workaround for remounting EUI flyout on resize if session prop is set to 'start'
-            size={flyoutWidthRef.current}
-            pushMinBreakpoint="xl"
-            data-test-subj={dataTestSubj ?? 'docViewerFlyout'}
-            onKeyDown={onKeyDown}
-            ownFocus={true}
-            minWidth={minWidth}
-            maxWidth={maxWidth}
-            resizable={true}
-            onResize={setFlyoutWidth}
-            css={{
-              maxWidth: `${isXlScreen ? `calc(100vw - ${DEFAULT_WIDTH}px)` : '90vw'} !important`,
-            }}
-            paddingSize="m"
-            aria-label={currentFlyoutTitle}
-            {...a11yProps}
-          >
+        <FlyoutTemplate
+          session="start"
+          historyKey={historyKey}
+          flyoutMenuProps={{
+            title: currentFlyoutTitle,
+            'data-test-subj': 'docViewerRowDetailsTitle',
+            hideTitle: false,
+            leadingActions: flyoutLeadingActions,
+            trailingActions: flyoutMenuTrailingActions,
+            // prev/next document navigation (replaces the old EuiPagination subheader)
+            pagination:
+              activePage !== -1
+                ? {
+                    currentIndex: activePage,
+                    total: pageCount,
+                    onPrevious: () => setPage(activePage - 1),
+                    onNext: () => setPage(activePage + 1),
+                  }
+                : undefined,
+          }}
+          className="DiscoverFlyout" // used to override the z-index of the flyout from SecuritySolution
+          onClose={onClose}
+          type={flyoutType ?? 'push'}
+          // workaround for remounting EUI flyout on resize if session prop is set to 'start'
+          size={flyoutWidthRef.current}
+          pushMinBreakpoint="xl"
+          data-test-subj={dataTestSubj ?? 'docViewerFlyout'}
+          onKeyDown={onKeyDown}
+          ownFocus={true}
+          minWidth={minWidth}
+          maxWidth={maxWidth}
+          resizable={true}
+          onResize={setFlyoutWidth}
+          css={{
+            maxWidth: `${isXlScreen ? `calc(100vw - ${DEFAULT_WIDTH}px)` : '90vw'} !important`,
+          }}
+          aria-label={currentFlyoutTitle}
+          {...flyoutA11yProps}
+        >
+          <FlyoutTemplate.Body>
             {screenReaderDescription}
-            {renderSubheader && (
+            {activePage === -1 && notice && (
               <>
-                <EuiFlexGroup
-                  direction="row"
-                  alignItems="center"
-                  justifyContent="spaceBetween"
-                  responsive={false}
-                  wrap={true}
-                  css={{ paddingBlock: euiTheme.size.s, paddingInline: euiTheme.size.m }}
-                >
-                  {activePage !== -1 ? (
-                    <EuiFlexItem data-test-subj={`docViewerFlyoutNavigationPage-${activePage}`}>
-                      <EuiPagination
-                        aria-label={i18n.translate('unifiedDocViewer.flyout.documentNavigation', {
-                          defaultMessage: 'Document pagination',
-                        })}
-                        pageCount={pageCount}
-                        activePage={activePage}
-                        onPageClick={setPage}
-                        compressed
-                        data-test-subj="docViewerFlyoutNavigation"
-                      />
-                    </EuiFlexItem>
-                  ) : (
-                    notice && (
-                      <EuiFlexItem data-test-subj="docViewerFlyoutNotice">{notice}</EuiFlexItem>
-                    )
-                  )}
-                  <EuiFlexItem grow={false} css={{ marginLeft: 'auto' }}>
-                    {flyoutActions}
-                  </EuiFlexItem>
-                </EuiFlexGroup>
-                <EuiHorizontalRule margin="none" />
+                {notice}
+                <EuiSpacer size="m" />
               </>
             )}
-            <EuiFlyoutBody>
-              {actualHit && docViewRenderProps ? (
-                <>
-                  {renderCustomHeader && (
-                    <>
-                      {renderCustomHeader(docViewRenderProps)}
-                      <EuiSpacer size="m" />
-                    </>
-                  )}
-                  <UnifiedDocViewer
-                    key={actualHit.id}
-                    ref={docViewerRef}
-                    initialTabId={initialTabId}
-                    initialState={initialDocViewerState}
-                    onInitialStateChange={onInitialDocViewerStateChange}
-                    onUpdateSelectedTabId={onUpdateSelectedTabId}
-                    initialShareableState={initialShareableState}
-                    onShareableStateChange={onShareableStateChange}
-                    originDocType={originDocType}
-                    {...docViewRenderProps}
-                  />
-                </>
-              ) : (
-                <UnresolvedDocument
-                  requestState={requestState}
-                  requestStateMeta={requestStateMeta}
+            {actualHit && docViewRenderProps ? (
+              <>
+                {renderCustomHeader && (
+                  <>
+                    {renderCustomHeader(docViewRenderProps)}
+                    <EuiSpacer size="m" />
+                  </>
+                )}
+                <UnifiedDocViewer
+                  key={actualHit.id}
+                  ref={docViewerRef}
+                  initialTabId={initialTabId}
+                  initialState={initialDocViewerState}
+                  onInitialStateChange={onInitialDocViewerStateChange}
+                  onUpdateSelectedTabId={onUpdateSelectedTabId}
+                  initialShareableState={initialShareableState}
+                  onShareableStateChange={onShareableStateChange}
+                  originDocType={originDocType}
+                  {...docViewRenderProps}
                 />
-              )}
-            </EuiFlyoutBody>
-            {renderCustomFooter && docViewRenderProps && (
-              <EuiFlyoutFooter>{renderCustomFooter(docViewRenderProps)}</EuiFlyoutFooter>
+                {/* FlyoutTemplate.Footer only accepts structured action parts, so a profile-supplied
+                    arbitrary footer (e.g. Security's alert/attack bars) can't be a sticky template
+                    footer yet. Rendered inline at the end of the body as an interim until the SharedUX
+                    footer escape-hatch lands (gap G3). */}
+                {renderCustomFooter && (
+                  <>
+                    <EuiSpacer size="m" />
+                    {renderCustomFooter(docViewRenderProps)}
+                  </>
+                )}
+              </>
+            ) : (
+              <UnresolvedDocument requestState={requestState} requestStateMeta={requestStateMeta} />
             )}
-          </EuiFlyout>
-        </EuiPortal>
+          </FlyoutTemplate.Body>
+        </FlyoutTemplate>
       </OriginDocTypeContext.Provider>
     </FlyoutHistoryKeyContext.Provider>
   );
