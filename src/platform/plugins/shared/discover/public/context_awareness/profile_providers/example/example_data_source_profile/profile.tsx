@@ -20,10 +20,15 @@ import { FormattedMessage } from '@kbn/i18n-react';
 import { useObservable } from '@kbn/use-observable';
 import { capitalize } from 'lodash';
 import React from 'react';
+import type {
+  DocViewerFooter,
+  DocViewerHeader,
+  DocViewerHeaderBlock,
+} from '@kbn/unified-doc-viewer/types';
 import type { DataSourceProfileProvider } from '../../../profiles';
 import { DataSourceCategory } from '../../../profiles';
 import { extractIndexPatternFrom } from '../../extract_index_pattern_from';
-import { ChartWithCustomButtons, CustomDocViewerFooter, CustomDocViewerHeader } from './components';
+import { ChartWithCustomButtons } from './components';
 import { CustomDocView } from './components/custom_doc_view';
 import {
   RestorableStateDocView,
@@ -296,8 +301,82 @@ export const createExampleDataSourceProfileProvider = (): DataSourceProfileProvi
 
             return prevValue.docViewsRegistry(registry);
           },
-          renderHeader: (props) => <CustomDocViewerHeader {...props} />,
-          renderFooter: (props) => <CustomDocViewerFooter {...props} />,
+          // Structured header: the profile describes WHAT the header contains (badges, key/value
+          // blocks, title adornments) and the flyout template renders it as consistent chrome.
+          // This replaces the deprecated `renderHeader` arbitrary-JSX injection.
+          getHeader: ({ hit }): DocViewerHeader => {
+            const message = getFieldValue(hit, 'message')?.toString();
+            const preview =
+              message && message.length > 100 ? `${message.substring(0, 100)}...` : message;
+            const logLevel = getFieldValue(hit, 'log.level')?.toString();
+
+            const blocks: DocViewerHeaderBlock[] = [];
+            const index = hit.raw._index;
+            if (index) {
+              blocks.push({ id: 'index', title: 'Index', value: index, variant: 'meta' });
+            }
+            if (preview) {
+              blocks.push({
+                id: 'message',
+                title: 'Message preview',
+                value: preview,
+                variant: 'info',
+              });
+            }
+            if (logLevel) {
+              const color =
+                logLevel === 'error' ? 'danger' : logLevel === 'warn' ? 'warning' : 'hollow';
+              blocks.push({
+                id: 'log-level',
+                title: 'Log level',
+                // Block values are ReactNode, so styled/interactive content works, not just text.
+                value: <EuiBadge color={color}>{logLevel}</EuiBadge>,
+                variant: 'info',
+              });
+            }
+
+            return {
+              titleIcon: 'documentation',
+              titleTooltip: 'Rendered by the example profile via the getHeader extension point',
+              description: 'Structured header — getHeader extension point',
+              badges: [
+                { id: 'example', label: 'Example', color: 'hollow' },
+                {
+                  id: 'profile',
+                  label: 'Data source profile',
+                  color: 'primary',
+                  iconType: 'indexSettings',
+                },
+              ],
+              blocks,
+            };
+          },
+          // Structured footer: a secondary button beside a "take action" menu. The flyout template
+          // renders these as pinned footer actions, replacing the deprecated `renderFooter`.
+          getFooter: ({ hit }): DocViewerFooter => ({
+            secondaryAction: {
+              id: 'example-open-new-tab',
+              label: 'Open in new tab',
+              iconType: 'external',
+              onClick: () => openInNewTab?.({ tabLabel: `Record #${hit.id}` }),
+            },
+            actionMenu: {
+              label: 'Example actions',
+              panels: [
+                {
+                  id: 0,
+                  title: 'Example actions',
+                  items: [
+                    {
+                      name: 'Limit ES|QL results to 10',
+                      icon: 'pencil',
+                      onClick: () => updateESQLQuery?.((query) => `${query} | LIMIT 10`),
+                    },
+                  ],
+                },
+              ],
+            },
+          }),
         };
       };
     },

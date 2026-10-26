@@ -161,43 +161,38 @@ describe('createExampleDataSourceProfileProvider', () => {
       );
     });
 
-    it('renders a custom header and footer previewing the record message', async () => {
+    it('describes the record in a structured header via getHeader', async () => {
       const record = buildRecord(ESQL_FLATTENED);
       const { docViewer } = await resolveDocViewer(ESQL_PARAMS, record);
       const props = { hit: record } as unknown as DocViewRenderProps;
 
-      render(
-        <>
-          {docViewer.renderHeader?.(props)}
-          {docViewer.renderFooter?.(props)}
-        </>
-      );
+      const header = docViewer.getHeader?.(props);
+      const messageBlock = header?.blocks?.find((block) => block.id === 'message');
 
-      expect(screen.getByTestId('exampleCustomDocViewerHeader')).toHaveTextContent(
-        'This is a debug log'
-      );
-      expect(screen.getByTestId('exampleCustomDocViewerFooter')).toHaveTextContent(
-        'This is a debug log'
-      );
+      expect(messageBlock?.value).toBe('This is a debug log');
     });
 
-    it('truncates a long message preview in the custom header and footer', async () => {
+    it('exposes structured footer actions via getFooter', async () => {
+      const record = buildRecord(ESQL_FLATTENED);
+      const { docViewer } = await resolveDocViewer(ESQL_PARAMS, record);
+      const props = { hit: record } as unknown as DocViewRenderProps;
+
+      const footer = docViewer.getFooter?.(props);
+
+      expect(footer?.secondaryAction?.label).toBe('Open in new tab');
+      expect(footer?.actionMenu?.label).toBe('Example actions');
+    });
+
+    it('truncates a long message preview in the structured header', async () => {
       const message = 'a'.repeat(150);
       const record = buildRecord({ ...ESQL_FLATTENED, message });
       const { docViewer } = await resolveDocViewer(ESQL_PARAMS, record);
       const props = { hit: record } as unknown as DocViewRenderProps;
 
-      render(
-        <>
-          {docViewer.renderHeader?.(props)}
-          {docViewer.renderFooter?.(props)}
-        </>
-      );
+      const header = docViewer.getHeader?.(props);
+      const messageBlock = header?.blocks?.find((block) => block.id === 'message');
 
-      for (const testSubj of ['exampleCustomDocViewerHeader', 'exampleCustomDocViewerFooter']) {
-        expect(screen.getByTestId(testSubj)).toHaveTextContent(`${'a'.repeat(100)}...`);
-        expect(screen.getByTestId(testSubj)).not.toHaveTextContent(message);
-      }
+      expect(messageBlock?.value).toBe(`${'a'.repeat(100)}...`);
     });
   });
 });
