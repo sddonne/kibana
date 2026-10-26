@@ -112,15 +112,23 @@ export interface DocViewerFooterActionMenu {
 }
 
 /**
- * Structured flyout footer. Encodes the template's rule in the type: a take-action MENU, or
- * primary/secondary BUTTONS — never both.
+ * Structured flyout footer. Mirrors the template's footer rule: an optional `secondaryAction`
+ * button plus a primary slot that is either a take-action `actionMenu` or a `primaryAction`
+ * button — never a menu and a primary button at once. Pairing a `secondaryAction` with an
+ * `actionMenu` is allowed (e.g. Security's "Ask AI Assistant" button beside a "Take action"
+ * menu), so the structured contract is as expressive as the template's
+ * `SecondaryAction` + `PrimaryActionMenu` and no arbitrary component injection is needed.
  */
 export type DocViewerFooter =
-  | { actionMenu: DocViewerFooterActionMenu; primaryAction?: never; secondaryAction?: never }
   | {
-      actionMenu?: never;
+      actionMenu: DocViewerFooterActionMenu;
+      secondaryAction?: DocViewerFooterAction;
+      primaryAction?: never;
+    }
+  | {
       primaryAction: DocViewerFooterAction;
       secondaryAction?: DocViewerFooterAction;
+      actionMenu?: never;
     };
 
 /**

@@ -79,7 +79,13 @@ export interface UnifiedDocViewerFlyoutProps
   getFooter?: (props: DocViewRenderProps) => DocViewerFooter;
   /** @deprecated Arbitrary header content; rendered as Body passthrough when `getHeader` is unset. */
   renderCustomHeader?: (props: DocViewRenderProps) => React.ReactElement;
-  /** @deprecated Arbitrary footer content; rendered at the Body bottom when `getFooter` is unset. */
+  /**
+   * @deprecated Arbitrary footer content, rendered at the Body bottom when `getFooter` is unset.
+   * The flyout template only pins a *structured* footer, so this deprecated path is kept visible
+   * with a temporary sticky bridge — it stays at the bottom, though body content scrolls behind it
+   * rather than above a true `EuiFlyoutFooter`. Prefer `getFooter` for a first-class pinned footer;
+   * this path and its bridge are removed once every footer producer is structured.
+   */
   renderCustomFooter?: (props: DocViewRenderProps) => React.ReactElement;
   setExpandedDoc: (doc?: DataTableRecord) => void;
   onClose: () => void;
@@ -371,13 +377,27 @@ export function UnifiedDocViewerFlyout({
                   originDocType={originDocType}
                   {...docViewRenderProps}
                 />
-                {/* Fallback for the deprecated arbitrary footer (rendered inline, non-sticky), only
-                    when no structured footer is set. */}
+                {/* Deprecated arbitrary footer, used only when no structured footer is set. The
+                    template can only pin a structured footer, so this temporary sticky bridge keeps
+                    the footer at the bottom until its producer (Security) migrates to the structured
+                    getFooter. Unlike a true EuiFlyoutFooter, body content scrolls behind it. */}
                 {!structuredFooter && renderCustomFooter && (
-                  <>
-                    <EuiSpacer size="m" />
+                  <div
+                    css={{
+                      position: 'sticky',
+                      bottom: 0,
+                      // Escape the body's padding (EuiFlyout paddingSize="m" = size.base) so the
+                      // bridge spans the full flyout width and sits flush with the bottom edge,
+                      // reading as a pinned footer rather than inset body content.
+                      marginBlock: `${euiTheme.size.base} -${euiTheme.size.base}`,
+                      marginInline: `-${euiTheme.size.base}`,
+                      padding: euiTheme.size.base,
+                      backgroundColor: euiTheme.colors.emptyShade,
+                      borderTop: euiTheme.border.thin,
+                    }}
+                  >
                     {renderCustomFooter(docViewRenderProps)}
-                  </>
+                  </div>
                 )}
               </>
             ) : (
