@@ -22,4 +22,6 @@ export type {
   DocViewerFooter,
   DocViewerFooterAction,
   DocViewerFooterActionMenu,
+  DocViewerFooterMenuItem,
+  DocViewerFooterMenuPanel,
 } from './services/types';

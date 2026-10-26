@@ -22,7 +22,12 @@ import useLocalStorage from 'react-use/lib/useLocalStorage';
 import type { ToastsStart } from '@kbn/core-notifications-browser';
 import useObservable from 'react-use/lib/useObservable';
 import type { ChromeStart } from '@kbn/core/public';
-import type { DocViewFilterFn, DocViewRenderProps } from '@kbn/unified-doc-viewer/types';
+import type {
+  DocViewerFooter,
+  DocViewerHeader,
+  DocViewFilterFn,
+  DocViewRenderProps,
+} from '@kbn/unified-doc-viewer/types';
 import { FlyoutHistoryKeyContext } from './flyout_history_key_context';
 import { OriginDocTypeContext } from './origin_doc_type_context';
 import { UnifiedDocViewer } from '../lazy_doc_viewer';
@@ -68,7 +73,13 @@ export interface UnifiedDocViewerFlyoutProps
   hideFilteringOnComputedColumns?: boolean;
   initialDocViewerState?: DocViewerProps['initialState'];
   onInitialDocViewerStateChange?: DocViewerProps['onInitialStateChange'];
+  /** Structured header description (preferred). Mapped to the flyout-template header parts. */
+  getHeader?: (props: DocViewRenderProps) => DocViewerHeader;
+  /** Structured footer description (preferred). Mapped to the flyout-template footer parts. */
+  getFooter?: (props: DocViewRenderProps) => DocViewerFooter;
+  /** @deprecated Arbitrary header content; rendered as Body passthrough when `getHeader` is unset. */
   renderCustomHeader?: (props: DocViewRenderProps) => React.ReactElement;
+  /** @deprecated Arbitrary footer content; rendered at the Body bottom when `getFooter` is unset. */
   renderCustomFooter?: (props: DocViewRenderProps) => React.ReactElement;
   setExpandedDoc: (doc?: DataTableRecord) => void;
   onClose: () => void;
@@ -115,6 +126,8 @@ export function UnifiedDocViewerFlyout({
   hideFilteringOnComputedColumns,
   initialTabId,
   initialDocViewerState,
+  getHeader,
+  getFooter,
   renderCustomHeader,
   renderCustomFooter,
   setExpandedDoc,
@@ -235,6 +248,9 @@ export function UnifiedDocViewerFlyout({
     ]
   );
 
+  const structuredHeader = docViewRenderProps ? getHeader?.(docViewRenderProps) : undefined;
+  const structuredFooter = docViewRenderProps ? getFooter?.(docViewRenderProps) : undefined;
+
   const defaultFlyoutTitle = isEsqlQuery
     ? i18n.translate('unifiedDocViewer.flyout.docViewerEsqlDetailHeading', {
         defaultMessage: 'Result',
@@ -296,6 +312,36 @@ export function UnifiedDocViewerFlyout({
           aria-label={currentFlyoutTitle}
           {...flyoutA11yProps}
         >
+          {structuredHeader && (
+            <FlyoutTemplate.Header
+              title={currentFlyoutTitle}
+              titleIcon={structuredHeader.titleIcon}
+              titleTooltip={structuredHeader.titleTooltip}
+              description={structuredHeader.description}
+            >
+              {structuredHeader.badges?.map((badge) => (
+                <FlyoutTemplate.Header.Badge
+                  key={badge.id}
+                  color={badge.color}
+                  iconType={badge.iconType}
+                  toolTipContent={badge.tooltip}
+                >
+                  {badge.label}
+                </FlyoutTemplate.Header.Badge>
+              ))}
+              {structuredHeader.blocks?.map((block) =>
+                block.variant === 'info' ? (
+                  <FlyoutTemplate.Header.InfoBlock key={block.id} title={block.title}>
+                    {block.value}
+                  </FlyoutTemplate.Header.InfoBlock>
+                ) : (
+                  <FlyoutTemplate.Header.MetaBlock key={block.id} title={block.title}>
+                    {block.value}
+                  </FlyoutTemplate.Header.MetaBlock>
+                )
+              )}
+            </FlyoutTemplate.Header>
+          )}
           <FlyoutTemplate.Body>
             {screenReaderDescription}
             {activePage === -1 && notice && (
@@ -306,7 +352,8 @@ export function UnifiedDocViewerFlyout({
             )}
             {actualHit && docViewRenderProps ? (
               <>
-                {renderCustomHeader && (
+                {/* Fallback for the deprecated arbitrary header, only when no structured header is set. */}
+                {!structuredHeader && renderCustomHeader && (
                   <>
                     {renderCustomHeader(docViewRenderProps)}
                     <EuiSpacer size="m" />
@@ -324,11 +371,9 @@ export function UnifiedDocViewerFlyout({
                   originDocType={originDocType}
                   {...docViewRenderProps}
                 />
-                {/* FlyoutTemplate.Footer only accepts structured action parts, so a profile-supplied
-                    arbitrary footer (e.g. Security's alert/attack bars) can't be a sticky template
-                    footer yet. Rendered inline at the end of the body as an interim until the SharedUX
-                    footer escape-hatch lands (gap G3). */}
-                {renderCustomFooter && (
+                {/* Fallback for the deprecated arbitrary footer (rendered inline, non-sticky), only
+                    when no structured footer is set. */}
+                {!structuredFooter && renderCustomFooter && (
                   <>
                     <EuiSpacer size="m" />
                     {renderCustomFooter(docViewRenderProps)}
@@ -339,6 +384,35 @@ export function UnifiedDocViewerFlyout({
               <UnresolvedDocument requestState={requestState} requestStateMeta={requestStateMeta} />
             )}
           </FlyoutTemplate.Body>
+          {structuredFooter && (
+            <FlyoutTemplate.Footer>
+              {structuredFooter.secondaryAction && (
+                <FlyoutTemplate.Footer.SecondaryAction
+                  label={structuredFooter.secondaryAction.label}
+                  onClick={structuredFooter.secondaryAction.onClick}
+                  iconType={structuredFooter.secondaryAction.iconType}
+                  isDisabled={structuredFooter.secondaryAction.isDisabled}
+                  tooltip={structuredFooter.secondaryAction.tooltip}
+                />
+              )}
+              {structuredFooter.actionMenu ? (
+                <FlyoutTemplate.Footer.PrimaryActionMenu
+                  label={structuredFooter.actionMenu.label}
+                  panels={structuredFooter.actionMenu.panels}
+                  isDisabled={structuredFooter.actionMenu.isDisabled}
+                  isLoading={structuredFooter.actionMenu.isLoading}
+                />
+              ) : structuredFooter.primaryAction ? (
+                <FlyoutTemplate.Footer.PrimaryAction
+                  label={structuredFooter.primaryAction.label}
+                  onClick={structuredFooter.primaryAction.onClick}
+                  iconType={structuredFooter.primaryAction.iconType}
+                  isDisabled={structuredFooter.primaryAction.isDisabled}
+                  tooltip={structuredFooter.primaryAction.tooltip}
+                />
+              ) : null}
+            </FlyoutTemplate.Footer>
+          )}
         </FlyoutTemplate>
       </OriginDocTypeContext.Provider>
     </FlyoutHistoryKeyContext.Provider>

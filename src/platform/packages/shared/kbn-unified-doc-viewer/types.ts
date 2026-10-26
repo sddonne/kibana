@@ -21,4 +21,6 @@ export type {
   DocViewerFooter,
   DocViewerFooterAction,
   DocViewerFooterActionMenu,
+  DocViewerFooterMenuItem,
+  DocViewerFooterMenuPanel,
 } from './src/types';

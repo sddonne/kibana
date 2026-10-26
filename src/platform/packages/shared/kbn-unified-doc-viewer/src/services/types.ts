@@ -15,7 +15,12 @@ import type { EbtClickAttrs } from '@kbn/ebt-click';
 import type { SerializableRecord } from '@kbn/utility-types';
 import type { ZodTypeAny } from '@kbn/zod';
 import type { ReactElement, ReactNode } from 'react';
-import type { EuiBadgeProps, EuiContextMenuPanelDescriptor, IconType } from '@elastic/eui';
+import type {
+  EuiBadgeProps,
+  EuiContextMenuPanelDescriptor,
+  EuiContextMenuPanelItemDescriptor,
+  IconType,
+} from '@elastic/eui';
 import type { DocViewsRegistry } from './doc_views_registry';
 
 /*
@@ -30,7 +35,7 @@ import type { DocViewsRegistry } from './doc_views_registry';
 export interface DocViewerHeaderBadge {
   id: string;
   label: ReactNode;
-  color?: EuiBadgeProps['color'];
+  color: EuiBadgeProps['color'];
   iconType?: IconType;
   tooltip?: ReactNode;
 }
@@ -45,12 +50,9 @@ export interface DocViewerHeaderBlock {
   /**
    * `meta` → compact inline key/value row (template `Header.MetaBlock`);
    * `info` → larger titled-value grid cell (template `Header.InfoBlock`). Defaults to `meta`.
+   * Styling of the value (color, size) is expressed in the `value` node itself.
    */
   variant?: 'meta' | 'info';
-  /** `info` only: value text color, passed through to the block. */
-  color?: string;
-  /** `info` only: value font scale. */
-  size?: 'xs' | 's' | 'm' | 'l' | 'xl';
 }
 
 /** Structured flyout header. The title text itself stays on `DocViewerExtension.title`. */
@@ -77,15 +79,34 @@ export interface DocViewerFooterAction {
   tooltip?: ReactNode;
 }
 
+/** Narrows an EUI menu item so its `name` is plain text (interactive items break menu keyboard nav). */
+type WithStringName<T> = T extends { name: ReactNode } ? Omit<T, 'name'> & { name: string } : T;
+
+/** A single footer-menu item: a string-named action or a separator (no self-rendered items). */
+export type DocViewerFooterMenuItem = WithStringName<
+  Extract<EuiContextMenuPanelItemDescriptor, { renderItem?: never }>
+>;
+
+/**
+ * A (sub-)panel in a footer action menu. Mirrors the shared flyout-template menu-panel shape so the
+ * flyout can pass it straight through, without this package depending on `@kbn/flyout-template`.
+ */
+export type DocViewerFooterMenuPanel = Omit<
+  EuiContextMenuPanelDescriptor,
+  'content' | 'items' | 'title'
+> & {
+  items: DocViewerFooterMenuItem[];
+  /** Sub-menu title — required when users navigate into the panel (used for the "Back" button). */
+  title?: string;
+  content?: never;
+};
+
 /** A "take action" menu: a trigger button opening an EuiContextMenu. */
 export interface DocViewerFooterActionMenu {
   /** Trigger button text (e.g. "Take action"). */
   label: string;
-  /**
-   * Context-menu panels. Items must use string `name`s (no `renderItem`) so the flyout can map them
-   * onto the template's narrowed menu-panel type.
-   */
-  panels: EuiContextMenuPanelDescriptor[];
+  /** Context-menu panels; items use string `name`s (no self-rendered items). */
+  panels: DocViewerFooterMenuPanel[];
   isDisabled?: boolean;
   isLoading?: boolean;
 }
