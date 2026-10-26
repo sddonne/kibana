@@ -262,13 +262,22 @@ describe('Discover flyout', function () {
   });
 
   it('should not navigate with arrow keys through documents if an input is in focus', async () => {
+    // The custom header renders inside the doc viewer's tab panel, so a doc view must exist for it
+    // (and its input) to render. A doc viewer with zero tabs is not a real scenario.
+    const registry = mockUnifiedDocViewerServices.unifiedDocViewer.registry;
+    registry.add({ id: 'test_doc_view', title: 'Test view', order: 0, render: () => <div /> });
     mockRenderCustomHeader = () => <input data-test-subj="flyoutCustomInput" />;
-    const { props, user } = await renderComponent({});
 
-    screen.getByTestId('flyoutCustomInput').focus();
-    await user.keyboard('{ArrowRight}{ArrowLeft}');
+    try {
+      const { props, user } = await renderComponent({});
 
-    expect(props.setExpandedDoc).not.toHaveBeenCalled();
+      screen.getByTestId('flyoutCustomInput').focus();
+      await user.keyboard('{ArrowRight}{ArrowLeft}');
+
+      expect(props.setExpandedDoc).not.toHaveBeenCalled();
+    } finally {
+      registry.removeById('test_doc_view');
+    }
   });
 
   it('should not render single/surrounding views for ES|QL', async () => {

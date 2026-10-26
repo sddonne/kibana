@@ -7,7 +7,16 @@
  * License v3.0 only", or the "Server Side Public License, v 1".
  */
 
-export { DocViewer, type DocViewerProps, type DocViewerApi } from './doc_viewer';
+export {
+  DocViewer,
+  DocViewerTabs,
+  type DocViewerProps,
+  type DocViewerApi,
+  type DocViewerTabsProps,
+  type DocViewerTabsApi,
+  type DocViewerTabDescriptor,
+  type UseDocViewerTabsResult,
+} from './doc_viewer';
 export { DOC_VIEWER_TABS_EBT_ELEMENT } from './get_doc_view_tab_ebt_props';
 export {
   DOC_VIEWER_SHAREABLE_STATE_MAX_LENGTH,

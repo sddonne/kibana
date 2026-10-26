@@ -7,174 +7,80 @@
  * License v3.0 only", or the "Server Side Public License, v 1".
  */
 
-import type { ComponentProps, ComponentPropsWithoutRef, ComponentRef, RefAttributes } from 'react';
-import React, {
-  forwardRef,
-  useCallback,
-  useImperativeHandle,
-  useMemo,
-  useRef,
-  useState,
-  useEffect,
-} from 'react';
+import type { ComponentProps, ComponentPropsWithoutRef, ComponentRef, ReactElement } from 'react';
+import React, { forwardRef, useMemo } from 'react';
 import type { EuiTabbedContentTab } from '@elastic/eui';
 import { EuiTabbedContent } from '@elastic/eui';
-import useLocalStorage from 'react-use/lib/useLocalStorage';
-import type { AnalyticsServiceStart } from '@kbn/core/public';
-import { getDocViewTabEbtProps } from './get_doc_view_tab_ebt_props';
-import { DocViewerTab } from './doc_viewer_tab';
-import type { DocView, DocViewRenderProps, DocViewerShareableState } from '../../types';
-import { useDocViewerTabViewedEvent } from '../../analytics';
+import type { DocView, DocViewerRestorableState, DocViewerShareableState } from '../../types';
 import {
-  useRestorableState,
-  useRestorableStateValue,
-  withRestorableState,
-} from './restorable_state';
-import {
-  capShareableState,
-  mergeShareableStateIntoRestorable,
-  projectShareableTabsState,
-} from './shareable_state';
+  useDocViewerTabs,
+  type InternalDocViewerApi,
+  type InternalDocViewerProps,
+  type UseDocViewerTabsResult,
+} from './use_doc_viewer_tabs';
+import { withRestorableState } from './restorable_state';
+import { mergeShareableStateIntoRestorable } from './shareable_state';
 
-export const INITIAL_TAB = 'unifiedDocViewer:initialTab';
+export { INITIAL_TAB } from './use_doc_viewer_tabs';
+export type {
+  InternalDocViewerApi,
+  InternalDocViewerProps,
+  DocViewerTabDescriptor,
+  UseDocViewerTabsResult,
+} from './use_doc_viewer_tabs';
 
-export interface InternalDocViewerApi {
-  setSelectedTabId: (tabId: string) => void;
-}
+/** Standalone doc viewer: renders the shared tab model with `EuiTabbedContent`. */
+const InternalDocViewer = forwardRef<InternalDocViewerApi, InternalDocViewerProps>((props, ref) => {
+  const { tabs, selectedTab, selectTab } = useDocViewerTabs(props, ref);
 
-export interface InternalDocViewerProps
-  extends DocViewRenderProps,
-    RefAttributes<InternalDocViewerApi>,
-    Pick<AnalyticsServiceStart, 'reportEvent'> {
-  docViews: DocView[];
-  initialTabId?: DocView['id'];
-  onUpdateSelectedTabId?: (tabId: string | undefined) => void;
-  /**
-   * Emits the URL-shareable projection of the doc viewer state (selected tab + per-tab shareable
-   * slices) whenever it changes, so a host can persist it in a deep link.
-   */
-  onShareableStateChange?: (state: DocViewerShareableState) => void;
-  originDocType?: string;
-}
-
-const getFullTabId = (tabId: string) => `kbn_doc_viewer_tab_${tabId}`;
-const getOriginalTabId = (fullTabId: string) => fullTabId.replace('kbn_doc_viewer_tab_', '');
-
-const InternalDocViewer = forwardRef<InternalDocViewerApi, InternalDocViewerProps>(
-  (
-    {
-      docViews,
-      initialTabId,
-      onUpdateSelectedTabId,
-      onShareableStateChange,
-      reportEvent,
-      originDocType,
-      ...renderProps
-    },
-    ref
-  ) => {
-    const tabs = docViews
-      .filter(({ enabled }) => enabled) // Filter out disabled doc views
-      .map((docView: DocView) => ({
-        id: getFullTabId(docView.id), // `id` value is used to persist the selected tab in localStorage
-        name: docView.title,
-        prepend: docView.prepend,
-        content: (
-          <DocViewerTab
-            key={`${renderProps.hit.id}_${docView.id}`}
-            docView={docView}
-            renderProps={renderProps}
-          />
-        ),
-        ['data-test-subj']: `docViewerTab-${docView.id}`,
-        ...getDocViewTabEbtProps(docView),
-      }));
-
-    const [storedInitialTabId, setInitialTabId] = useLocalStorage<string>(INITIAL_TAB);
-    const [selectedTabId, setSelectedTabId] = useState<string | undefined>(
-      initialTabId ? getFullTabId(initialTabId) : storedInitialTabId
-    );
-    const selectedTab =
-      (selectedTabId ? tabs.find(({ id }) => id === selectedTabId) : undefined) ?? tabs.at(0);
-
-    useEffect(() => {
-      onUpdateSelectedTabId?.(selectedTabId ? getOriginalTabId(selectedTabId) : undefined);
-    }, [onUpdateSelectedTabId, selectedTabId]);
-
-    useImperativeHandle(
-      ref,
-      () => ({
-        setSelectedTabId: (tabId: string) => {
-          setSelectedTabId(getFullTabId(tabId));
-          setInitialTabId(getFullTabId(tabId)); // Persist the selected tab in localStorage
-        },
-      }),
-      [setInitialTabId]
-    );
-
-    const [initialDocViewerViewedEventKey, setInitialDocViewerViewedEventKey] = useRestorableState(
-      'initialDocViewerViewedEventKey',
-      undefined
-    );
-
-    // Emit the URL-shareable projection of the doc viewer state whenever the selected tab or a tab's
-    // shareable slice changes.
-    const docViewerTabsState = useRestorableStateValue('docViewerTabsState');
-    const lastEmittedShareableStateRef = useRef<string>();
-    const selectedOriginalTabId = selectedTab ? getOriginalTabId(selectedTab.id) : undefined;
-
-    useEffect(() => {
-      if (!onShareableStateChange) {
-        return;
-      }
-
-      const shareableState = capShareableState({
-        selectedTabId: selectedOriginalTabId,
-        tabsState: projectShareableTabsState(docViews, docViewerTabsState),
-      });
-
-      const serialized = JSON.stringify(shareableState);
-
-      if (serialized === lastEmittedShareableStateRef.current) {
-        return;
-      }
-
-      lastEmittedShareableStateRef.current = serialized;
-      onShareableStateChange(shareableState);
-    }, [onShareableStateChange, docViews, docViewerTabsState, selectedOriginalTabId]);
-
-    useDocViewerTabViewedEvent({
-      reportEvent,
-      tabId: selectedTab ? getOriginalTabId(selectedTab.id) : undefined,
-      originDocType,
-      hit: renderProps.hit,
-      initialEventKey: initialDocViewerViewedEventKey,
-      onEventKeyChange: setInitialDocViewerViewedEventKey,
-    });
-
-    const onTabClick = useCallback(
-      (tab: EuiTabbedContentTab) => {
-        setSelectedTabId(tab.id);
-        setInitialTabId(tab.id); // Persist the selected tab in localStorage
-      },
-      [setInitialTabId]
-    );
-
-    if (!tabs.length) {
-      // There's a minimum of 2 tabs active in Discover.
-      // This condition takes care of unit tests with 0 tabs.
-      return null;
-    }
-
-    return (
-      <div className="kbnDocViewer" data-test-subj="kbnDocViewer">
-        <EuiTabbedContent size="s" tabs={tabs} selectedTab={selectedTab} onTabClick={onTabClick} />
-      </div>
-    );
+  if (!tabs.length) {
+    // There's a minimum of 2 tabs active in Discover.
+    // This condition takes care of unit tests with 0 tabs.
+    return null;
   }
-);
+
+  const euiTabs: EuiTabbedContentTab[] = tabs.map((tab) => ({
+    id: tab.id,
+    name: tab.name,
+    prepend: tab.prepend,
+    content: tab.content,
+    'data-test-subj': tab['data-test-subj'],
+    ...tab.ebtProps,
+  }));
+
+  return (
+    <div className="kbnDocViewer" data-test-subj="kbnDocViewer">
+      <EuiTabbedContent
+        size="s"
+        tabs={euiTabs}
+        selectedTab={euiTabs.find(({ id }) => id === selectedTab?.id)}
+        onTabClick={(tab) => selectTab(tab.id)}
+      />
+    </div>
+  );
+});
+
+// Render-prop variant: owns the same tab model and state as `InternalDocViewer`, but hands it to its
+// child instead of rendering, so a host can present the tabs with its own UI. The props type is
+// inlined (not a named interface) so the public `DocViewerTabsProps` references only exported types.
+const InternalDocViewerTabs = forwardRef<
+  InternalDocViewerApi,
+  InternalDocViewerProps & { children: (tabs: UseDocViewerTabsResult) => ReactElement }
+>(({ children, ...props }, ref) => children(useDocViewerTabs(props, ref)));
 
 const RestorableDocViewer = withRestorableState(InternalDocViewer);
+const RestorableDocViewerTabs = withRestorableState(InternalDocViewerTabs);
+
+/** Builds the restorable state from both the local initial state and the URL shareable state. */
+const useRestoredInitialState = (
+  docViews: DocView[],
+  initialState: DocViewerRestorableState | undefined,
+  initialShareableState: DocViewerShareableState | undefined
+) =>
+  useMemo(
+    () => mergeShareableStateIntoRestorable(docViews, initialState, initialShareableState),
+    [docViews, initialState, initialShareableState]
+  );
 
 export const DocViewer = forwardRef<
   ComponentRef<typeof RestorableDocViewer>,
@@ -182,10 +88,10 @@ export const DocViewer = forwardRef<
     initialShareableState?: DocViewerShareableState;
   }
 >(({ docViews, initialTabId, initialState, initialShareableState, ...props }, ref) => {
-  // Restorable state built both from the initialState and the shareable state comming from the URL.
-  const restoredInitialState = useMemo(
-    () => mergeShareableStateIntoRestorable(docViews, initialState, initialShareableState),
-    [docViews, initialState, initialShareableState]
+  const restoredInitialState = useRestoredInitialState(
+    docViews,
+    initialState,
+    initialShareableState
   );
 
   return (
@@ -199,5 +105,36 @@ export const DocViewer = forwardRef<
   );
 });
 
+/**
+ * Same tab model and state as `DocViewer`, but instead of rendering the tabs it exposes
+ * `{ tabs, selectedTab, selectTab }` to its render-prop child. A host can then present the tabs
+ * with its own UI (e.g. the flyout template's tab API) while reusing all of the doc viewer's tab
+ * state — selected-tab persistence, initial-tab resolution, and restorable/shareable state.
+ */
+export const DocViewerTabs = forwardRef<
+  ComponentRef<typeof RestorableDocViewerTabs>,
+  ComponentPropsWithoutRef<typeof RestorableDocViewerTabs> & {
+    initialShareableState?: DocViewerShareableState;
+  }
+>(({ docViews, initialTabId, initialState, initialShareableState, ...props }, ref) => {
+  const restoredInitialState = useRestoredInitialState(
+    docViews,
+    initialState,
+    initialShareableState
+  );
+
+  return (
+    <RestorableDocViewerTabs
+      ref={ref}
+      {...props}
+      docViews={docViews}
+      initialTabId={initialTabId ?? initialShareableState?.selectedTabId}
+      initialState={restoredInitialState}
+    />
+  );
+});
+
 export type DocViewerProps = ComponentProps<typeof DocViewer>;
 export type DocViewerApi = ComponentRef<typeof DocViewer>;
+export type DocViewerTabsProps = ComponentProps<typeof DocViewerTabs>;
+export type DocViewerTabsApi = ComponentRef<typeof DocViewerTabs>;

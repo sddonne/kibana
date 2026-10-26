@@ -7,14 +7,22 @@
  * License v3.0 only", or the "Server Side Public License, v 1".
  */
 
-import type { ReactNode } from 'react';
-import React, { useCallback, useMemo, useRef } from 'react';
+import type { ComponentProps, ReactNode } from 'react';
+import React, { Suspense, useCallback, useMemo, useRef } from 'react';
 import type { DocViewerProps, ElasticRequestState } from '@kbn/unified-doc-viewer';
 import { DOC_VIEWER_FLYOUT_HISTORY_KEY } from '@kbn/unified-doc-viewer';
 import { i18n } from '@kbn/i18n';
 import type { DataView } from '@kbn/data-views-plugin/public';
 import type { EuiFlyoutMenuAction, EuiFlyoutProps } from '@elastic/eui';
-import { EuiSpacer, isDOMNode, keys, useEuiTheme, useIsWithinMinBreakpoint } from '@elastic/eui';
+import {
+  EuiDelayRender,
+  EuiSkeletonText,
+  EuiSpacer,
+  isDOMNode,
+  keys,
+  useEuiTheme,
+  useIsWithinMinBreakpoint,
+} from '@elastic/eui';
 import { FlyoutTemplate } from '@kbn/flyout-template';
 import type { DataTableRecord } from '@kbn/discover-utils/types';
 import type { DataSource } from '@kbn/data-source';
@@ -30,7 +38,7 @@ import type {
 } from '@kbn/unified-doc-viewer/types';
 import { FlyoutHistoryKeyContext } from './flyout_history_key_context';
 import { OriginDocTypeContext } from './origin_doc_type_context';
-import { UnifiedDocViewer } from '../lazy_doc_viewer';
+import { UnifiedDocViewerTabs } from '../doc_viewer/doc_viewer_tabs';
 import { useFlyoutA11y } from './use_flyout_a11y';
 import { UnresolvedDocument, type RequestStateMeta } from './unresolved_document';
 
@@ -257,6 +265,17 @@ export function UnifiedDocViewerFlyout({
   const structuredHeader = docViewRenderProps ? getHeader?.(docViewRenderProps) : undefined;
   const structuredFooter = docViewRenderProps ? getFooter?.(docViewRenderProps) : undefined;
 
+  // The deprecated render fallbacks are only used when no structured descriptor is provided. Compute
+  // them here, where `docViewRenderProps` is in scope, so the JSX below stays a thin presentation.
+  const customHeaderNode =
+    !structuredHeader && renderCustomHeader && docViewRenderProps
+      ? renderCustomHeader(docViewRenderProps)
+      : undefined;
+  const customFooterNode =
+    !structuredFooter && renderCustomFooter && docViewRenderProps
+      ? renderCustomFooter(docViewRenderProps)
+      : undefined;
+
   const defaultFlyoutTitle = isEsqlQuery
     ? i18n.translate('unifiedDocViewer.flyout.docViewerEsqlDetailHeading', {
         defaultMessage: 'Result',
@@ -275,165 +294,199 @@ export function UnifiedDocViewerFlyout({
   // the same back-button navigation history, enabling "Back" to return the user
   // from the Trace Waterfall to the Document Viewer.
   const historyKey = DOC_VIEWER_FLYOUT_HISTORY_KEY;
+  const hasDocument = Boolean(actualHit && docViewRenderProps);
+
+  // Props shared whether or not the document has resolved. Tabs are added only once there is a
+  // document (and therefore doc views) to tab through.
+  const flyoutTemplateProps: Omit<
+    ComponentProps<typeof FlyoutTemplate>,
+    'children' | 'tabs' | 'selectedTabId' | 'onTabChange'
+  > = {
+    session: 'start',
+    historyKey,
+    flyoutMenuProps: {
+      title: currentFlyoutTitle,
+      'data-test-subj': 'docViewerRowDetailsTitle',
+      // With tabs the title shows in the header above the tab bar, so hide the menu-bar duplicate.
+      hideTitle: hasDocument,
+      leadingActions: flyoutLeadingActions,
+      trailingActions: flyoutMenuTrailingActions,
+      // prev/next document navigation (replaces the old EuiPagination subheader)
+      pagination:
+        activePage !== -1
+          ? {
+              currentIndex: activePage,
+              total: pageCount,
+              onPrevious: () => setPage(activePage - 1),
+              onNext: () => setPage(activePage + 1),
+            }
+          : undefined,
+    },
+    className: 'DiscoverFlyout', // used to override the z-index of the flyout from SecuritySolution
+    onClose,
+    type: flyoutType ?? 'push',
+    // workaround for remounting EUI flyout on resize if session prop is set to 'start'
+    size: flyoutWidthRef.current,
+    pushMinBreakpoint: 'xl',
+    'data-test-subj': dataTestSubj ?? 'docViewerFlyout',
+    onKeyDown,
+    ownFocus: true,
+    minWidth,
+    maxWidth,
+    resizable: true,
+    onResize: setFlyoutWidth,
+    css: {
+      maxWidth: `${isXlScreen ? `calc(100vw - ${DEFAULT_WIDTH}px)` : '90vw'} !important`,
+    },
+    'aria-label': currentFlyoutTitle,
+  };
 
   return (
     <FlyoutHistoryKeyContext.Provider value={historyKey}>
       <OriginDocTypeContext.Provider value={originDocType}>
-        <FlyoutTemplate
-          session="start"
-          historyKey={historyKey}
-          flyoutMenuProps={{
-            title: currentFlyoutTitle,
-            'data-test-subj': 'docViewerRowDetailsTitle',
-            hideTitle: false,
-            leadingActions: flyoutLeadingActions,
-            trailingActions: flyoutMenuTrailingActions,
-            // prev/next document navigation (replaces the old EuiPagination subheader)
-            pagination:
-              activePage !== -1
-                ? {
-                    currentIndex: activePage,
-                    total: pageCount,
-                    onPrevious: () => setPage(activePage - 1),
-                    onNext: () => setPage(activePage + 1),
-                  }
-                : undefined,
-          }}
-          className="DiscoverFlyout" // used to override the z-index of the flyout from SecuritySolution
-          onClose={onClose}
-          type={flyoutType ?? 'push'}
-          // workaround for remounting EUI flyout on resize if session prop is set to 'start'
-          size={flyoutWidthRef.current}
-          pushMinBreakpoint="xl"
-          data-test-subj={dataTestSubj ?? 'docViewerFlyout'}
-          onKeyDown={onKeyDown}
-          ownFocus={true}
-          minWidth={minWidth}
-          maxWidth={maxWidth}
-          resizable={true}
-          onResize={setFlyoutWidth}
-          css={{
-            maxWidth: `${isXlScreen ? `calc(100vw - ${DEFAULT_WIDTH}px)` : '90vw'} !important`,
-          }}
-          aria-label={currentFlyoutTitle}
-          {...flyoutA11yProps}
-        >
-          {structuredHeader && (
-            <FlyoutTemplate.Header
-              title={currentFlyoutTitle}
-              titleIcon={structuredHeader.titleIcon}
-              titleTooltip={structuredHeader.titleTooltip}
-              description={structuredHeader.description}
-            >
-              {structuredHeader.badges?.map((badge) => (
-                <FlyoutTemplate.Header.Badge
-                  key={badge.id}
-                  color={badge.color}
-                  iconType={badge.iconType}
-                  toolTipContent={badge.tooltip}
+        {actualHit && docViewRenderProps ? (
+          <UnifiedDocViewerTabs
+            key={actualHit.id}
+            ref={docViewerRef}
+            initialTabId={initialTabId}
+            initialState={initialDocViewerState}
+            onInitialStateChange={onInitialDocViewerStateChange}
+            onUpdateSelectedTabId={onUpdateSelectedTabId}
+            initialShareableState={initialShareableState}
+            onShareableStateChange={onShareableStateChange}
+            originDocType={originDocType}
+            {...docViewRenderProps}
+          >
+            {({ tabs, selectedTab, selectTab }) => (
+              <FlyoutTemplate
+                {...flyoutTemplateProps}
+                {...flyoutA11yProps}
+                tabs={tabs.map((tab) => ({
+                  id: tab.id,
+                  label: tab.name,
+                  prepend: tab.prepend,
+                  'data-test-subj': tab['data-test-subj'],
+                  ...tab.ebtProps,
+                }))}
+                selectedTabId={selectedTab?.id}
+                onTabChange={selectTab}
+              >
+                {/* Template tabs require a Header zone — the tab bar renders here. The title that
+                    used to live only in the flyout menu bar now shows above the tabs. */}
+                <FlyoutTemplate.Header
+                  title={currentFlyoutTitle}
+                  titleIcon={structuredHeader?.titleIcon}
+                  titleTooltip={structuredHeader?.titleTooltip}
+                  description={structuredHeader?.description}
                 >
-                  {badge.label}
-                </FlyoutTemplate.Header.Badge>
-              ))}
-              {structuredHeader.blocks?.map((block) =>
-                block.variant === 'info' ? (
-                  <FlyoutTemplate.Header.InfoBlock key={block.id} title={block.title}>
-                    {block.value}
-                  </FlyoutTemplate.Header.InfoBlock>
-                ) : (
-                  <FlyoutTemplate.Header.MetaBlock key={block.id} title={block.title}>
-                    {block.value}
-                  </FlyoutTemplate.Header.MetaBlock>
-                )
-              )}
-            </FlyoutTemplate.Header>
-          )}
-          <FlyoutTemplate.Body>
-            {screenReaderDescription}
-            {activePage === -1 && notice && (
-              <>
-                {notice}
-                <EuiSpacer size="m" />
-              </>
+                  {structuredHeader?.badges?.map((badge) => (
+                    <FlyoutTemplate.Header.Badge
+                      key={badge.id}
+                      color={badge.color}
+                      iconType={badge.iconType}
+                      toolTipContent={badge.tooltip}
+                    >
+                      {badge.label}
+                    </FlyoutTemplate.Header.Badge>
+                  ))}
+                  {structuredHeader?.blocks?.map((block) =>
+                    block.variant === 'info' ? (
+                      <FlyoutTemplate.Header.InfoBlock key={block.id} title={block.title}>
+                        {block.value}
+                      </FlyoutTemplate.Header.InfoBlock>
+                    ) : (
+                      <FlyoutTemplate.Header.MetaBlock key={block.id} title={block.title}>
+                        {block.value}
+                      </FlyoutTemplate.Header.MetaBlock>
+                    )
+                  )}
+                </FlyoutTemplate.Header>
+                <FlyoutTemplate.Body>
+                  {/* In tabbed mode the template renders only the active panel, so the a11y text,
+                      the not-found notice, and the deprecated render fallbacks live inside it. */}
+                  <FlyoutTemplate.Body.TabPanel tabId={selectedTab?.id ?? ''}>
+                    {screenReaderDescription}
+                    {activePage === -1 && notice && (
+                      <>
+                        {notice}
+                        <EuiSpacer size="m" />
+                      </>
+                    )}
+                    {customHeaderNode && (
+                      <>
+                        {customHeaderNode}
+                        <EuiSpacer size="m" />
+                      </>
+                    )}
+                    <Suspense
+                      fallback={
+                        <EuiDelayRender delay={300}>
+                          <EuiSkeletonText />
+                        </EuiDelayRender>
+                      }
+                    >
+                      {selectedTab?.content}
+                    </Suspense>
+                    {/* Deprecated arbitrary footer (no structured footer): the template only pins a
+                        structured footer, so a sticky bridge keeps it at the bottom until its
+                        producer (Security) migrates to getFooter. Body content scrolls behind it. */}
+                    {customFooterNode && (
+                      <div
+                        css={{
+                          position: 'sticky',
+                          bottom: 0,
+                          marginBlock: `${euiTheme.size.base} -${euiTheme.size.base}`,
+                          marginInline: `-${euiTheme.size.base}`,
+                          padding: euiTheme.size.base,
+                          backgroundColor: euiTheme.colors.emptyShade,
+                          borderTop: euiTheme.border.thin,
+                        }}
+                      >
+                        {customFooterNode}
+                      </div>
+                    )}
+                  </FlyoutTemplate.Body.TabPanel>
+                </FlyoutTemplate.Body>
+                {structuredFooter && (
+                  <FlyoutTemplate.Footer>
+                    {structuredFooter.secondaryAction && (
+                      <FlyoutTemplate.Footer.SecondaryAction
+                        label={structuredFooter.secondaryAction.label}
+                        onClick={structuredFooter.secondaryAction.onClick}
+                        iconType={structuredFooter.secondaryAction.iconType}
+                        isDisabled={structuredFooter.secondaryAction.isDisabled}
+                        tooltip={structuredFooter.secondaryAction.tooltip}
+                      />
+                    )}
+                    {structuredFooter.actionMenu ? (
+                      <FlyoutTemplate.Footer.PrimaryActionMenu
+                        label={structuredFooter.actionMenu.label}
+                        panels={structuredFooter.actionMenu.panels}
+                        isDisabled={structuredFooter.actionMenu.isDisabled}
+                        isLoading={structuredFooter.actionMenu.isLoading}
+                      />
+                    ) : structuredFooter.primaryAction ? (
+                      <FlyoutTemplate.Footer.PrimaryAction
+                        label={structuredFooter.primaryAction.label}
+                        onClick={structuredFooter.primaryAction.onClick}
+                        iconType={structuredFooter.primaryAction.iconType}
+                        isDisabled={structuredFooter.primaryAction.isDisabled}
+                        tooltip={structuredFooter.primaryAction.tooltip}
+                      />
+                    ) : null}
+                  </FlyoutTemplate.Footer>
+                )}
+              </FlyoutTemplate>
             )}
-            {actualHit && docViewRenderProps ? (
-              <>
-                {/* Fallback for the deprecated arbitrary header, only when no structured header is set. */}
-                {!structuredHeader && renderCustomHeader && (
-                  <>
-                    {renderCustomHeader(docViewRenderProps)}
-                    <EuiSpacer size="m" />
-                  </>
-                )}
-                <UnifiedDocViewer
-                  key={actualHit.id}
-                  ref={docViewerRef}
-                  initialTabId={initialTabId}
-                  initialState={initialDocViewerState}
-                  onInitialStateChange={onInitialDocViewerStateChange}
-                  onUpdateSelectedTabId={onUpdateSelectedTabId}
-                  initialShareableState={initialShareableState}
-                  onShareableStateChange={onShareableStateChange}
-                  originDocType={originDocType}
-                  {...docViewRenderProps}
-                />
-                {/* Deprecated arbitrary footer, used only when no structured footer is set. The
-                    template can only pin a structured footer, so this temporary sticky bridge keeps
-                    the footer at the bottom until its producer (Security) migrates to the structured
-                    getFooter. Unlike a true EuiFlyoutFooter, body content scrolls behind it. */}
-                {!structuredFooter && renderCustomFooter && (
-                  <div
-                    css={{
-                      position: 'sticky',
-                      bottom: 0,
-                      // Escape the body's padding (EuiFlyout paddingSize="m" = size.base) so the
-                      // bridge spans the full flyout width and sits flush with the bottom edge,
-                      // reading as a pinned footer rather than inset body content.
-                      marginBlock: `${euiTheme.size.base} -${euiTheme.size.base}`,
-                      marginInline: `-${euiTheme.size.base}`,
-                      padding: euiTheme.size.base,
-                      backgroundColor: euiTheme.colors.emptyShade,
-                      borderTop: euiTheme.border.thin,
-                    }}
-                  >
-                    {renderCustomFooter(docViewRenderProps)}
-                  </div>
-                )}
-              </>
-            ) : (
+          </UnifiedDocViewerTabs>
+        ) : (
+          <FlyoutTemplate {...flyoutTemplateProps} {...flyoutA11yProps}>
+            <FlyoutTemplate.Body>
+              {screenReaderDescription}
               <UnresolvedDocument requestState={requestState} requestStateMeta={requestStateMeta} />
-            )}
-          </FlyoutTemplate.Body>
-          {structuredFooter && (
-            <FlyoutTemplate.Footer>
-              {structuredFooter.secondaryAction && (
-                <FlyoutTemplate.Footer.SecondaryAction
-                  label={structuredFooter.secondaryAction.label}
-                  onClick={structuredFooter.secondaryAction.onClick}
-                  iconType={structuredFooter.secondaryAction.iconType}
-                  isDisabled={structuredFooter.secondaryAction.isDisabled}
-                  tooltip={structuredFooter.secondaryAction.tooltip}
-                />
-              )}
-              {structuredFooter.actionMenu ? (
-                <FlyoutTemplate.Footer.PrimaryActionMenu
-                  label={structuredFooter.actionMenu.label}
-                  panels={structuredFooter.actionMenu.panels}
-                  isDisabled={structuredFooter.actionMenu.isDisabled}
-                  isLoading={structuredFooter.actionMenu.isLoading}
-                />
-              ) : structuredFooter.primaryAction ? (
-                <FlyoutTemplate.Footer.PrimaryAction
-                  label={structuredFooter.primaryAction.label}
-                  onClick={structuredFooter.primaryAction.onClick}
-                  iconType={structuredFooter.primaryAction.iconType}
-                  isDisabled={structuredFooter.primaryAction.isDisabled}
-                  tooltip={structuredFooter.primaryAction.tooltip}
-                />
-              ) : null}
-            </FlyoutTemplate.Footer>
-          )}
-        </FlyoutTemplate>
+            </FlyoutTemplate.Body>
+          </FlyoutTemplate>
+        )}
       </OriginDocTypeContext.Provider>
     </FlyoutHistoryKeyContext.Provider>
   );
